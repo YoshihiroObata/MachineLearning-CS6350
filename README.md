@@ -1,2 +1,1 @@
-# MachineLearningDecisionTrees
-Repo for hw 1 in CS 6350
+This is a machine learning library developed by Yoshihiro Obata for CS 6350 at the University of Utah
