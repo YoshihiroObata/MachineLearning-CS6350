@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Feb 11 22:24:06 2021
+HW1 Car problem
 
 @author: Yoshihiro Obata
 """
@@ -27,11 +27,12 @@ labelsTrain = np.array(train.iloc[:,-1])
 labelsTest = np.array(test.iloc[:,-1])
 
 # %% training the ID3 algo for testing
-carTreeInit = decisionTree(attrTrain, attrNames, labelsTrain)
+carTreeInit = decisionTree(attrTrain, attrNames, labelsTrain, 
+                           randTieBreak=False, method = 'entropy')
 carTree = run_ID3(carTreeInit)
 
 # %% applying the ID3 algo for testing
-errinit = applyTree(carTree, test, labelsTest)
+errinit = applyTree(carTree, train, labelsTrain)
 errs, total_err = apply_ID3(errinit)
 
 # %% making trees
@@ -39,40 +40,11 @@ methods = ['entropy', 'ME', 'gini']
 datTrain = [attrTrain, labelsTrain, train]
 datTest = [attrTest, labelsTest, test]
 depths = len(attrNames)
-# DTs = [[0]*len(attrNames)]*len(methods)
-# train_err = np.zeros((len(methods), len(attrNames)))
-# test_err = np.zeros((len(methods), len(attrNames)))
-# for i, method in enumerate(methods):
-#     for j in range(len(attrNames)):
-#         # print(method)
-#         d = j + 1
-#         # print(method, d)
-#         carTreeInit2 = decisionTree(attrTrain, attrNames, labelsTrain, depth=d,
-#                                     method=method)
-#         DTs[i][j] = run_ID3(carTreeInit2)
-#         errinit_train = applyTree(DTs[i][j], train, labelsTrain)
-#         _, train_err[i,j] = apply_ID3(errinit_train)
-        
-#         errinit_test = applyTree(DTs[i][j], test, labelsTest)
-#         _, test_err[i,j] = apply_ID3(errinit_test)
-        
-# %% gathering errs
-# for i, method in enumerate(methods):
-#     for j in range(len(attrNames)):
-#         # d = j + 1
-#         errinit_train = applyTree(DTs[i][j], train, labelsTrain)
-#         _, train_err[i,j] = apply_ID3(errinit_train)
-        
-#         errinit_test = applyTree(DTs[i][j], test, labelsTest)
-#         _, test_err[i,j] = apply_ID3(errinit_test)
-#         print(test_err)
 
-errinit = tester(methods, attrNames, datTrain, datTest, depths=depths)
+errinit = tester(methods, attrNames, datTrain, datTest, depths=depths, tie=False)
 train_err_car, test_err_car = tester.test(errinit)
         
 # %% plotting results and calc avgs
-# avg_train = np.mean(train_err, axis=1)
-# avg_test = np.mean(test_err, axis=1)
 avg_train = np.mean(train_err_car, axis=1)
 avg_test = np.mean(test_err_car, axis=1)
 color = ['r', 'b', 'k']
@@ -93,7 +65,7 @@ plt.ylim([0.65,1])
 plt.xlim([0.5,6])
 for spine in ax.spines:
     ax.spines[spine].set_linewidth(2)
-# plt.savefig('accuracyCAR.png', dpi = 150, bbox_inches = 'tight')
+plt.savefig('accuracyCAR.png', dpi = 150, bbox_inches = 'tight')
 print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
     avg_train[0], avg_train[1], avg_train[2]))
 print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(

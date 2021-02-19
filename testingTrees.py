@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Feb 13 14:47:46 2021
+contains tester class that has testing funcitonality
 
 @author: Yoshihiro Obata
 """
@@ -11,7 +11,10 @@ from ID3 import applyTree
 from ID3 import apply_ID3
 
 class tester:
-    def __init__(self, methods, attrNames, datTrain, datTest, depths, num=False):
+    """Tester class that gives errors for varying depths and methods 
+    
+    """
+    def __init__(self, methods, attrNames, datTrain, datTest, depths, num=False, tie=True):
         self.methods = methods
         self.attrNames = attrNames
         self.dfTrain = datTrain[2]
@@ -24,8 +27,23 @@ class tester:
         self.numerical = num
         self.train_err = np.zeros((len(methods), len(self.depths)))
         self.test_err = np.zeros((len(methods), len(self.depths)))
+        self.tie = tie
 
     def _applyAndError(self, dt, attr, labels, num):
+        """applies the tree and gives you total error
+
+        Parameters
+        ----------
+        :dt: decisionTree object
+        :attr: training attributes
+        :labels: training labels
+        :num: if numerical or not
+
+        Returns
+        -------
+        :err: total accuracy
+        """
+        # apply 
         err = 0
         errinit = applyTree(dt, attr, labels, numerical=num)
         _, err = apply_ID3(errinit)
@@ -33,22 +51,35 @@ class tester:
     
     
     def test(self):
+        """Function that tests all depths and method you want. Give it a tester object
+
+        Returns
+        -------
+        :self.train_err: numpy array of training errs (row: method, col: depth)
+        :self.test_err: numpy array of test errs (row: method, col: depth)
+        """
+        # loop through methods and depths for each method
         for i, method in enumerate(self.methods):
             for j, d in enumerate(self.depths):
-                # d = int(d)
-                # print(method,d)
+                # initialize and make decision tree with specified depth and method
                 treeInit = None
                 dt = None
                 treeInit = decisionTree(self.attrsTrain, self.attrNames, 
                                         self.labelsTrain,
                                         depth=d, method=method, 
-                                        numerical=self.numerical)
+                                        numerical=self.numerical,
+                                        randTieBreak = self.tie)
+                print('Creating DT with depth limit: {} and method: {}...'.format(d, method))
                 dt = run_ID3(treeInit)
-
+                print('Tree complete')
+                # get errors by applying the tree to both train and test sets
+                print('Applying the tree to train and test...')
                 self.train_err[i,j] = self._applyAndError(dt, self.dfTrain, 
                                                      self.labelsTrain, 
                                                      num=self.numerical)
                 self.test_err[i,j] = self._applyAndError(dt, self.dfTest, 
                                                      self.labelsTest, 
                                                      num=self.numerical)
+                print('Applying complete\n')
+        print('Done')
         return self.train_err, self.test_err

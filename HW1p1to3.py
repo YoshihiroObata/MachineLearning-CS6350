@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-HW 1: Problems 1-3
+HW 1: Problem 1
 
 Decision Trees: checking hand calcs and running a few examples. Uses the ID3
 file.
 
-Yoshihiro Obata
+@ author: Yoshihiro Obata
 """
 
 # %% Importing Packages
@@ -25,8 +25,8 @@ y = np.array([0, 0, 1, 1, 0, 0, 0]).T
 attrNames = [0,1,2,3]
 
 # %% run ID3 on 1a
-tree0 = decisionTree(attributes, attrNames, y) 
-tree1 = run_ID3(tree0)
+init1 = decisionTree(attributes, attrNames, y, method='gini') 
+tree1 = run_ID3(init1)
 
 # %% tennis data
 attributes2 = np.array([['S', 'S', 'O', 'R', 'R', 'R', 'O', 
@@ -40,9 +40,8 @@ attributes2 = np.array([['S', 'S', 'O', 'R', 'R', 'R', 'O',
 y2 = np.array([0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0]).T
 attrNames2 = ['Outlook', 'Temp', 'Humidity', 'Wind']
 
-# %% run ID3 on 2
-tree2 = decisionTree(attributes2, attrNames2, y2, method='ME')
-tree3 = run_ID3(tree2)
+init2 = decisionTree(attributes2, attrNames2, y2, method='ME')
+tree2 = run_ID3(init2)
 
 # %% ID3 on 3a
 attributes3 = np.array([['S', 'S', 'O', 'R', 'R', 'R', 'O', 
@@ -56,8 +55,8 @@ attributes3 = np.array([['S', 'S', 'O', 'R', 'R', 'R', 'O',
 y3 = np.array([0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1]).T
 attrNames3 = ['Outlook', 'Temp', 'Humidity', 'Wind']
 
-tree4 = decisionTree(attributes3, attrNames3, y3)
-tree5 = run_ID3(tree4)
+init3 = decisionTree(attributes3, attrNames3, y3)
+tree3 = run_ID3(init3)
 
 # %% ID3 on 3b
 attributes4 = np.array([['S', 'S', 'O', 'R', 'R', 'R', 'O', 
@@ -69,11 +68,11 @@ attributes4 = np.array([['S', 'S', 'O', 'R', 'R', 'R', 'O',
                         ['W', 'S', 'W', 'W', 'W', 'S', 'S', 
                          'W', 'W', 'W', 'S', 'S', 'W', 'S', 'W']]).T
 
-tree6 = decisionTree(attributes4, attrNames3, y3, depth=1)
-tree7 = run_ID3(tree6)
+init4 = decisionTree(attributes4, attrNames3, y3, depth=1)
+tree4 = run_ID3(init4)
 
 # %% testing label str
 y4 = np.array(['n', 'n', 'y', 'y', 'y', 'n', 'y', 'n', 
                'y', 'y', 'y', 'y', 'y', 'n', 'y']).T
-tree8 = decisionTree(attributes4, attrNames3, y4)
-tree9 = run_ID3(tree8)
+init5 = decisionTree(attributes4, attrNames3, y4)
+tree5 = run_ID3(init5)
