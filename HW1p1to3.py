@@ -92,10 +92,10 @@ infogain = H1 - sum(sv*Hv/sum(sv))
 H2 = entropy([3/(5+5/14), (2+5/14)/(5+5/14)])
 Hv2 = np.array([0, entropy([1/(2+5/14),(1+5/14)/(2+5/14)]), 0])
 sv2 = np.array([2, 2+5/14, 1])
-infogain2 = H2 - sum(sv*Hv/sum(sv))
+infogain2 = H2 - sum(sv2*Hv2/sum(sv2))
 infogain3 = H2
-Hv4 = np.array([entropy([(2)/(3+5/14), (1+5/14)/(3+5/14)]), entropy([1/2,1/(2)])])
-sv4 = np.array([2, 2+5/14])
+Hv4 = np.array([entropy([(2)/(3+5/14), (1+5/14)/(3+5/14)]), entropy([1/2,1/2])])
+sv4 = np.array([3+5/14,2])
 infogain4 = H2 - sum(sv4*Hv4/sum(sv4))
 
 H3 = entropy([(3+5/14)/(5+5/14), (2)/(5+5/14)])

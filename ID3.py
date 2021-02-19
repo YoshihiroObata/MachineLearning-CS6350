@@ -326,19 +326,20 @@ class applyTree:
     recursive, it does not return anything since I didn't specify it to. It
     just updates the self.errs dataframe and we get that dataframe at the end
     """
-    def __init__(self, trainedTree, test, labelsTest, numerical=False):
+    def __init__(self, trainedTree, test, numerical=False):
         self.errs = pd.DataFrame(columns=['Test Labels', 'Result', 'Acc']) # make err df
         self.root = trainedTree # root is the whole trained tree
-        self.startTest = test # test data
-        self.startLabels = labelsTest # test labels
+        self.attrNames = np.array(test.columns)
+        self.startTest = np.array(test.iloc[:,:-1]) # test DataFrame
+        self.startLabels = np.array(test.iloc[:,-1]) # test labels
         self.numerical = numerical # if data is numerical or not
         
-    def _update_errs(self, subset, currNode):
+    def _update_errs(self, sublab, currNode):
         """Updates self.errs with the err at the leaf of the tree
 
         Parameters
         ----------
-        :subLabel: labels of the test data subset that took the branches to list node
+        :sublab: labels of the test data subset that took the branches to list node
         :currNode : the leaf node in the tree we are at
 
         Returns
@@ -346,7 +347,7 @@ class applyTree:
         None.
         """
         # labels of test data subset
-        test_lab = subset.iloc[:,-1]
+        test_lab = sublab
         # get value of node, make same len as test_lab, and find if they are the same
         trainLabel = [currNode.attribute]
         train_lab = np.array(trainLabel*len(test_lab))
@@ -357,7 +358,7 @@ class applyTree:
                    'Acc': acc}
         self.errs = self.errs.append(pd.DataFrame(labdict))
         
-    def _applyRec(self, currNode, subset):
+    def _applyRec(self, currNode, subset, sublab):
         """Main function for traversing the tree
 
         Parameters
@@ -372,31 +373,30 @@ class applyTree:
         """
         # if we hit a leaf, update the errs df and return None
         if currNode.leaf:
-            self._update_errs(subset, currNode)
+            self._update_errs(sublab, currNode)
             return
         # split on the attribute of the node, loop through node children
         split_on = currNode.attribute
+        split_idx = np.where(np.array(split_on == self.attrNames))[0][0]
+        # print(split_on, self.attrNames)
         for child in currNode.children:
             nextNode = child
             subVal = child.valName
-            # if not sumerical, get the next attr subset and its labels and do again
-            # print(isinstance(subVal[0], (int, float)) and self.numerical)
-            # print(subVal, split_on)
-            # currIdx = [i for i in range(len(subset.columns)) if subset.columns[i] == currNode.attribute]
-            if self.numerical==False or isinstance(subVal, str):       
-                nextSubset = subset[subset[split_on] == subVal]
-                # nextLabels = subLabel[subset[split_on] == subVal]
-                self._applyRec(nextNode, nextSubset)
+            # if not numerical, get the next attr subset and its labels and do again
+            if self.numerical==False or isinstance(subVal, str):
+                # print(split_idx)
+                newidx = np.array(subset[:,split_idx] == subVal)
+                # print(newidx)
+                nextSubset = subset[newidx]
+                nextLabels = sublab[newidx]
+                self._applyRec(nextNode, nextSubset, nextLabels)
             # for numerical data, the median value was stored in the node, split on that
             else:
                 above_median = subVal[1]
-                # print(subVal)
                 if above_median:
                     nextSubset = subset[subset[split_on] > subVal[0]]
-                    # nextLabels = subLabel[subset[split_on] > subVal[0]]
                 else:
                     nextSubset = subset[subset[split_on] <= subVal[0]]
-                    # nextLabels = subLabel[subset[split_on] <= subVal[0]]
                 self._applyRec(nextNode, nextSubset)
       
 def run_ID3(self):
@@ -405,7 +405,6 @@ def run_ID3(self):
     Returns
     -------
     :self.node: the root node of the whole tree
-
     """
     idx = list(range(len(self.attributes))) # all indices of attributes
     attrNames = self.attrNames.copy() # attribute names
@@ -424,8 +423,8 @@ def apply_ID3(self):
     """
     currNode = self.root # root node of tree
     allTest = self.startTest # test data
-    # allLabels = self.startLabels # test labels
-    self._applyRec(currNode, allTest) # run apply tree    
+    allLabels = self.startLabels # test labels
+    self._applyRec(currNode, allTest, allLabels) # run apply tree    
     errdf = self.errs # updated error df
     total_err = np.sum(errdf['Acc'])/len(errdf) # calculate total error
     

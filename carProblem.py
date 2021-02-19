@@ -14,35 +14,38 @@ from ID3 import applyTree
 from ID3 import apply_ID3
 from testingTrees import tester
 import matplotlib.pyplot as plt
+import time
 
 # %% importing the data and splitting it up
 cols = list(pd.read_csv('car/data-desc.txt', skiprows=14))
-train = pd.read_csv('car/train.csv', names=cols)
-test = pd.read_csv('car/test.csv', names=cols)
+train0 = pd.read_csv('car/train.csv', names=cols)
+test0 = pd.read_csv('car/test.csv', names=cols)
     
-attrTrain = np.array(train.iloc[:,:-1])
-attrTest = np.array(test.iloc[:,:-1])
-attrNames = cols[:-1]
-labelsTrain = np.array(train.iloc[:,-1])
-labelsTest = np.array(test.iloc[:,-1])
+attrTrain0 = np.array(train0.iloc[:,:-1])
+attrTest0= np.array(test0.iloc[:,:-1])
+attrNames0 = cols[:-1]
+labelsTrain0 = np.array(train0.iloc[:,-1])
+labelsTest0 = np.array(test0.iloc[:,-1])
 
 # %% training the ID3 algo for testing
-carTreeInit = decisionTree(attrTrain, attrNames, labelsTrain, 
-                           randTieBreak=False, method = 'entropy')
+carTreeInit = decisionTree(attrTrain0, attrNames0, labelsTrain0, method = 'entropy')
 carTree = run_ID3(carTreeInit)
 
 # %% applying the ID3 algo for testing
-car_errinit = applyTree(carTree, test, labelsTest)
-errs, total_err = apply_ID3(car_errinit)
+car_errinit = applyTree(carTree, test0)
+errs0, total_err0 = apply_ID3(car_errinit)
 
 # %% making trees
+tic = time.perf_counter()
 methods = ['entropy', 'ME', 'gini']
-datTrain = [attrTrain, labelsTrain, train]
-datTest = [attrTest, labelsTest, test]
-depths = len(attrNames)
+datTrain0 = [attrTrain0, labelsTrain0, train0]
+datTest0 = [attrTest0, labelsTest0, test0]
+depths0 = len(attrNames0)
 
-errinit = tester(methods, attrNames, datTrain, datTest, depths=depths, tie=False)
+errinit = tester(methods, attrNames0, datTrain0, datTest0, depths=depths0)
 train_err_car, test_err_car = tester.test(errinit)
+toc = time.perf_counter()
+print('Time for car code is {:0.4f} seconds.'.format(toc-tic))
         
 # %% plotting results and calc avgs
 avg_train = np.mean(train_err_car, axis=1)
@@ -66,7 +69,7 @@ plt.xlim([0.5,6])
 for spine in ax.spines:
     ax.spines[spine].set_linewidth(2)
 plt.savefig('accuracyCAR.png', dpi = 150, bbox_inches = 'tight')
-print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-    avg_train[0], avg_train[1], avg_train[2]))
-print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-    avg_test[0], avg_test[1], avg_test[2]))
+# print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+#     avg_train[0], avg_train[1], avg_train[2]))
+# print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+#     avg_test[0], avg_test[1], avg_test[2]))

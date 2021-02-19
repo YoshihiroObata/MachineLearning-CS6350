@@ -14,7 +14,8 @@ class tester:
     """Tester class that gives errors for varying depths and methods 
     
     """
-    def __init__(self, methods, attrNames, datTrain, datTest, depths, num=False, tie=True):
+    def __init__(self, methods, attrNames, datTrain, datTest, depths, 
+                 numerical=False, tie=True):
         self.methods = methods
         self.attrNames = attrNames
         self.dfTrain = datTrain[2]
@@ -24,12 +25,12 @@ class tester:
         self.attrsTest = datTest[0]
         self.labelsTest = datTest[1]
         self.depths = np.linspace(1,depths,depths)
-        self.numerical = num
+        self.numerical = numerical
         self.train_err = np.zeros((len(methods), len(self.depths)))
         self.test_err = np.zeros((len(methods), len(self.depths)))
         self.tie = tie
 
-    def _applyAndError(self, dt, attr, labels, num):
+    def _applyAndError(self, dt, test, numerical=False):
         """applies the tree and gives you total error
 
         Parameters
@@ -45,7 +46,7 @@ class tester:
         """
         # apply 
         err = 0
-        errinit = applyTree(dt, attr, labels, numerical=num)
+        errinit = applyTree(dt, test, numerical=numerical)
         _, err = apply_ID3(errinit)
         return err
     
@@ -75,11 +76,9 @@ class tester:
                 # get errors by applying the tree to both train and test sets
                 print('Applying the tree to train and test...')
                 self.train_err[i,j] = self._applyAndError(dt, self.dfTrain, 
-                                                     self.labelsTrain, 
-                                                     num=self.numerical)
+                                                     numerical=self.numerical)
                 self.test_err[i,j] = self._applyAndError(dt, self.dfTest, 
-                                                     self.labelsTest, 
-                                                     num=self.numerical)
+                                                     numerical=self.numerical)
                 print('Applying complete\n')
         print('Done')
         return self.train_err, self.test_err
