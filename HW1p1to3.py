@@ -12,9 +12,12 @@ file.
 import numpy as np
 from ID3 import decisionTree
 from ID3 import run_ID3
+
+# %% 
+def entropy(ps):
+    return -sum([p*np.log2(p) for p in ps])
     
 # %% Training Data
-
 # making the training data with columns as x1, x2, x3, x4
 attributes = np.array([[0, 0, 0, 1, 0, 1, 0],
                        [0, 1, 0, 0, 1, 1, 1],
@@ -76,3 +79,30 @@ y4 = np.array(['n', 'n', 'y', 'y', 'y', 'n', 'y', 'n',
                'y', 'y', 'y', 'y', 'y', 'n', 'y']).T
 init5 = decisionTree(attributes4, attrNames3, y4)
 tree5 = run_ID3(init5)
+
+# %%
+H1 = entropy([1/3, 2/3])
+sunny = entropy([3/(5+5/14), (2+5/14)/(5+5/14)])
+over = 0
+rainy = entropy([2/(5+5/14), (3+5/14)/(5+5/14)])
+Hv = np.array([sunny, over, rainy])
+sv = np.array([5+5/14, 4+4/14, 5+5/14])
+infogain = H1 - sum(sv*Hv/sum(sv))
+
+H2 = entropy([3/(5+5/14), (2+5/14)/(5+5/14)])
+Hv2 = np.array([0, entropy([1/(2+5/14),(1+5/14)/(2+5/14)]), 0])
+sv2 = np.array([2, 2+5/14, 1])
+infogain2 = H2 - sum(sv*Hv/sum(sv))
+infogain3 = H2
+Hv4 = np.array([entropy([(2)/(3+5/14), (1+5/14)/(3+5/14)]), entropy([1/2,1/(2)])])
+sv4 = np.array([2, 2+5/14])
+infogain4 = H2 - sum(sv4*Hv4/sum(sv4))
+
+H3 = entropy([(3+5/14)/(5+5/14), (2)/(5+5/14)])
+Hv5 = np.array([entropy([1/(3+5/14), (2+5/14)/(3+5/14)]), entropy([0.5,0.5])])
+sv5 = np.array([3+5/14, 2])
+infogain5 = H3 - sum(sv5*Hv5/sum(sv5))
+infogain7 = H3
+Hv6 = np.array([entropy([0.5, 0.5]), entropy([1/(3+5/14), (2+5/14)/(3+5/14)])])
+sv6 = np.array([2, 3+5/14])
+infogain6 = H3 - sum(sv6*Hv6/sum(sv6))

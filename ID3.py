@@ -41,13 +41,15 @@ class decisionTree:
     def __init__(self, attributes, attrNames, labels, method = 'entropy', 
                  depth = None, randTieBreak = True, numerical = False):
         self.attributes = attributes # np array with columns as attributes
-        self.attrClone = None # clone to handle numerical data without altering orignal attributes
+        self.attrClone = attributes.copy() # clone to handle numerical data without altering orignal attributes
         self.attrNames = attrNames # attribute names
         self.labels = labels # np array of labels (target)
         self.labelSet = list(set(labels)) # list of unique labels
         self.labelCount = [list(labels).count(i) for i in self.labelSet] # list of number of a certain label
         self.node = None # node
         self.numerical = numerical # bool of if numerical data
+        self.media = None
+        self.numerical_idx = []
         if randTieBreak:
             self.randPick = True # pick random info gain attrName if tied 
         else:
@@ -225,8 +227,13 @@ class decisionTree:
         # get the attr index if the first val is a float or int
         numAttrID = [ID for i, ID in enumerate(attrIDs) if isinstance(attrID_type[i], (float,int))]
         # find median, split if > (True) or <= (False) median, update self.attrClone
+        self.media = np.zeros((len(attrNames),))
         for attr in numAttrID:
             median = np.median(self.attributes[idx, attr])
+            # print(median)
+            self.media[attr] = median
+            # print(self.media)
+            self.numerical_idx.append(attr)
             self.attrClone[:,attr] = self.attributes[:,attr] > median
     
     def _ID3Rec(self, idx, attrNames, node, prevMax=None):
@@ -265,9 +272,9 @@ class decisionTree:
             return node
         
         # set attrClone to attrs and if numerical, convert to bool
-        self.attrClone = self.attributes.copy()
-        if self.numerical:
-            self._num2Bool(idx, attrNames)
+        # self.attrClone = self.attributes.copy()
+        # if self.numerical:
+            # self._num2Bool(idx, attrNames)
         
         # get best attr, set this node attr to best one, init child list
         # print(idx, labelsAttr, attrNames)
@@ -290,9 +297,8 @@ class decisionTree:
             # node.children.append(child)
             child.depth = node.depth + 1
             # if the data is numerical, set child val to the median value, else, make it val
-            if self.numerical and isinstance(self.attributes[0,bestAttridx], (float,int)):
-                child.valName = (np.median(self.attributes[idx, bestAttridx]),
-                                 val)
+            if self.numerical and (bestAttridx in self.numerical_idx):
+                child.valName = (self.media[bestAttridx], val)
             else:
                 child.valName = val
             # get indices of child
@@ -358,7 +364,6 @@ class applyTree:
         ----------
         :currNode: current node in the tree
         :subset: current subset of the test data
-        :subLabel: current subset of test labels
 
         Returns
         -------
@@ -377,13 +382,15 @@ class applyTree:
             # if not sumerical, get the next attr subset and its labels and do again
             # print(isinstance(subVal[0], (int, float)) and self.numerical)
             # print(subVal, split_on)
-            if not (isinstance(subVal[0], (int, float)) and self.numerical):       
+            # currIdx = [i for i in range(len(subset.columns)) if subset.columns[i] == currNode.attribute]
+            if self.numerical==False or isinstance(subVal, str):       
                 nextSubset = subset[subset[split_on] == subVal]
                 # nextLabels = subLabel[subset[split_on] == subVal]
                 self._applyRec(nextNode, nextSubset)
             # for numerical data, the median value was stored in the node, split on that
             else:
                 above_median = subVal[1]
+                # print(subVal)
                 if above_median:
                     nextSubset = subset[subset[split_on] > subVal[0]]
                     # nextLabels = subLabel[subset[split_on] > subVal[0]]
@@ -402,6 +409,8 @@ def run_ID3(self):
     """
     idx = list(range(len(self.attributes))) # all indices of attributes
     attrNames = self.attrNames.copy() # attribute names
+    if self.numerical:
+        self._num2Bool(idx, attrNames)
     self.node = self._ID3Rec(idx, attrNames, self.node) # get the root node using id3
     return self.node
 

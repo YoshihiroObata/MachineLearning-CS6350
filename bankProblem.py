@@ -47,13 +47,12 @@ labelsTrain_no_unk = np.array(train_no_unk.iloc[:,-1])
 labelsTest_no_unk = np.array(test_no_unk.iloc[:,-1])
 
 # %% training the ID3 algo for testing
-bankTreeInit = decisionTree(attrTrain, attrNames, labelsTrain, numerical=True, depth=5)
+bankTreeInit = decisionTree(attrTrain, attrNames, labelsTrain, numerical=True)
 bankTree = run_ID3(bankTreeInit)
 
 # %% applying the ID3 algo for testing
 errinit = applyTree(bankTree, train, labelsTrain, numerical=True)
 errs, total_err = apply_ID3(errinit)
-print(total_err)
 
 # %% making trees
 # takes a long time, might need to move somewhere so it's not storing everything
@@ -89,11 +88,11 @@ plt.legend(fontsize = 16, loc = (1.025,0.63))
 plt.xlabel('Tree Depth', fontsize = 18)
 plt.ylabel('Accuracy', fontsize = 18)
 ax.tick_params(labelsize = 16, size = 10, width = 2)
-plt.ylim([0.87,0.885])
+# plt.ylim([0.87,0.885])
 plt.xlim([0,16])
 for spine in ax.spines:
     ax.spines[spine].set_linewidth(2)
-plt.savefig('accuracyBANK.png', dpi = 150, bbox_inches = 'tight')
+# plt.savefig('accuracyBANK.png', dpi = 150, bbox_inches = 'tight')
 print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
     avg_train[0], avg_train[1], avg_train[2]))
 print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
@@ -113,11 +112,11 @@ plt.legend(fontsize = 16, loc = (1.025,0.63))
 plt.xlabel('Tree Depth', fontsize = 18)
 plt.ylabel('Accuracy', fontsize = 18)
 ax2.tick_params(labelsize = 16, size = 10, width = 2)
-plt.ylim([0.87,0.885])
+# plt.ylim([0.87,0.885])
 plt.xlim([0,16])
 for spine in ax.spines:
     ax2.spines[spine].set_linewidth(2)
-plt.savefig('accuracyBANK2.png', dpi = 150, bbox_inches = 'tight')
+# plt.savefig('accuracyBANK2.png', dpi = 150, bbox_inches = 'tight')
 print('\nTraining errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
     avg_train_no_unk[0], avg_train_no_unk[1], avg_train_no_unk[2]))
 print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(

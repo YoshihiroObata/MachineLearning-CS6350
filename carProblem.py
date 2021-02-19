@@ -32,8 +32,8 @@ carTreeInit = decisionTree(attrTrain, attrNames, labelsTrain,
 carTree = run_ID3(carTreeInit)
 
 # %% applying the ID3 algo for testing
-errinit = applyTree(carTree, train, labelsTrain)
-errs, total_err = apply_ID3(errinit)
+car_errinit = applyTree(carTree, test, labelsTest)
+errs, total_err = apply_ID3(car_errinit)
 
 # %% making trees
 methods = ['entropy', 'ME', 'gini']
