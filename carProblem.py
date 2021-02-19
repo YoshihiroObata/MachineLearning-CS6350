@@ -32,7 +32,7 @@ carTreeInit = decisionTree(attrTrain0, attrNames0, labelsTrain0, method = 'entro
 carTree = run_ID3(carTreeInit)
 
 # %% applying the ID3 algo for testing
-car_errinit = applyTree(carTree, test0)
+car_errinit = applyTree(carTree, test0, carTreeInit)
 errs0, total_err0 = apply_ID3(car_errinit)
 
 # %% making trees

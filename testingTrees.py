@@ -30,7 +30,7 @@ class tester:
         self.test_err = np.zeros((len(methods), len(self.depths)))
         self.tie = tie
 
-    def _applyAndError(self, dt, test, numerical=False):
+    def _applyAndError(self, dt, test, treeInit, numerical=False):
         """applies the tree and gives you total error
 
         Parameters
@@ -46,7 +46,7 @@ class tester:
         """
         # apply 
         err = 0
-        errinit = applyTree(dt, test, numerical=numerical)
+        errinit = applyTree(dt, test, treeInit, numerical=numerical)
         _, err = apply_ID3(errinit)
         return err
     
@@ -75,10 +75,12 @@ class tester:
                 print('Tree complete')
                 # get errors by applying the tree to both train and test sets
                 print('Applying the tree to train and test...')
-                self.train_err[i,j] = self._applyAndError(dt, self.dfTrain, 
-                                                     numerical=self.numerical)
-                self.test_err[i,j] = self._applyAndError(dt, self.dfTest, 
-                                                     numerical=self.numerical)
+                self.train_err[i,j] = self._applyAndError(dt, self.dfTrain,
+                                                          treeInit,
+                                                          numerical=self.numerical)
+                self.test_err[i,j] = self._applyAndError(dt, self.dfTest,
+                                                         treeInit,
+                                                         numerical=self.numerical)
                 print('Applying complete\n')
         print('Done')
         return self.train_err, self.test_err

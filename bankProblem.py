@@ -13,6 +13,7 @@ from ID3 import applyTree
 from ID3 import apply_ID3
 from testingTrees import tester
 import matplotlib.pyplot as plt
+import time
 
 # %% replace unknown
 def replace_unk(df):
@@ -47,30 +48,39 @@ labelsTrain_no_unk = np.array(train_no_unk.iloc[:,-1])
 labelsTest_no_unk = np.array(test_no_unk.iloc[:,-1])
 
 # %% training the ID3 algo for testing
+tic = time.perf_counter()
 bankTreeInit = decisionTree(attrTrain, attrNames, labelsTrain, numerical=True)
 bankTree = run_ID3(bankTreeInit)
 
-# %% applying the ID3 algo for testing
-errinit = applyTree(bankTree, train, labelsTrain, numerical=True)
+# % applying the ID3 algo for testing
+errinit = applyTree(bankTree, train, bankTreeInit, numerical=True)
 errs, total_err = apply_ID3(errinit)
+toc = time.perf_counter()
+print('Time for bank code is {:0.4f} seconds.'.format(toc-tic))
 
 # %% making trees
 # takes a long time, might need to move somewhere so it's not storing everything
 # maybe combine with getting erros in new testing function
+tic = time.perf_counter()
 methods = ['entropy', 'ME', 'gini']
-datTrain = [attrTrain, labelsTrain, train]
-datTest = [attrTest, labelsTest, test]
 depths = len(attrNames)
 
-errinit = tester(methods, attrNames, datTrain, datTest, depths=depths, num=True)
+datTrain = [attrTrain, labelsTrain, train]
+datTest = [attrTest, labelsTest, test]
+
+errinit = tester(methods, attrNames, datTrain, datTest, depths=depths, 
+                 numerical=True)
 train_err_bank, test_err_bank = tester.test(errinit)
 
-# %% testing for replaced unknown values
-datTrain2 = [attrTrain_no_unk, labelsTrain_no_unk, train_no_unk]
-datTest2 = [attrTest_no_unk, labelsTest_no_unk, test_no_unk]
+# % testing for replaced unknown values
+# datTrain2 = [attrTrain_no_unk, labelsTrain_no_unk, train_no_unk]
+# datTest2 = [attrTest_no_unk, labelsTest_no_unk, test_no_unk]
 
-errinit2 = tester(methods, attrNames, datTrain2, datTest2, depths=depths, num=True)
-train_err_bank2, test_err_bank2 = tester.test(errinit2)
+# errinit2 = tester(methods, attrNames, datTrain2, datTest2, depths=depths, 
+#                   numerical=True)
+# train_err_bank2, test_err_bank2 = tester.test(errinit2)
+toc = time.perf_counter()
+print('Time for bank code is {:0.4f} seconds.'.format(toc-tic))
 # %% plotting results and calc avgs
 avg_train = np.mean(train_err_bank, axis=1)
 avg_test = np.mean(test_err_bank, axis=1)
@@ -88,15 +98,15 @@ plt.legend(fontsize = 16, loc = (1.025,0.63))
 plt.xlabel('Tree Depth', fontsize = 18)
 plt.ylabel('Accuracy', fontsize = 18)
 ax.tick_params(labelsize = 16, size = 10, width = 2)
-# plt.ylim([0.87,0.885])
+plt.ylim([0.82,1])
 plt.xlim([0,16])
 for spine in ax.spines:
     ax.spines[spine].set_linewidth(2)
 # plt.savefig('accuracyBANK.png', dpi = 150, bbox_inches = 'tight')
-print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-    avg_train[0], avg_train[1], avg_train[2]))
-print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-    avg_test[0], avg_test[1], avg_test[2]))
+# print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+#     avg_train[0], avg_train[1], avg_train[2]))
+# print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+#     avg_test[0], avg_test[1], avg_test[2]))
 
 # %% plotting results for replaced unknowns
 avg_train_no_unk = np.mean(train_err_bank2, axis=1)
@@ -112,12 +122,12 @@ plt.legend(fontsize = 16, loc = (1.025,0.63))
 plt.xlabel('Tree Depth', fontsize = 18)
 plt.ylabel('Accuracy', fontsize = 18)
 ax2.tick_params(labelsize = 16, size = 10, width = 2)
-# plt.ylim([0.87,0.885])
+plt.ylim([0.82,1])
 plt.xlim([0,16])
 for spine in ax.spines:
     ax2.spines[spine].set_linewidth(2)
 # plt.savefig('accuracyBANK2.png', dpi = 150, bbox_inches = 'tight')
-print('\nTraining errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-    avg_train_no_unk[0], avg_train_no_unk[1], avg_train_no_unk[2]))
-print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-    avg_test_no_unk[0], avg_test_no_unk[1], avg_test_no_unk[2]))
+# print('\nTraining errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+#     avg_train_no_unk[0], avg_train_no_unk[1], avg_train_no_unk[2]))
+# print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+#     avg_test_no_unk[0], avg_test_no_unk[1], avg_test_no_unk[2]))

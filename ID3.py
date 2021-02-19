@@ -297,10 +297,11 @@ class decisionTree:
             # node.children.append(child)
             child.depth = node.depth + 1
             # if the data is numerical, set child val to the median value, else, make it val
-            if self.numerical and (bestAttridx in self.numerical_idx):
-                child.valName = (self.media[bestAttridx], val)
-            else:
-                child.valName = val
+            # if self.numerical and (bestAttridx in self.numerical_idx):
+            #     child.valName = (self.media[bestAttridx], val)
+            # else:
+            #     child.valName = val
+            child.valName = val
             # get indices of child
             node.children.append(child)
             childidx = [i for i in idx if self.attrClone[i, bestAttridx] == val]
@@ -326,13 +327,16 @@ class applyTree:
     recursive, it does not return anything since I didn't specify it to. It
     just updates the self.errs dataframe and we get that dataframe at the end
     """
-    def __init__(self, trainedTree, test, numerical=False):
+    def __init__(self, trainedTree, test, treeInit, numerical=False):
         self.errs = pd.DataFrame(columns=['Test Labels', 'Result', 'Acc']) # make err df
         self.root = trainedTree # root is the whole trained tree
         self.attrNames = np.array(test.columns)
         self.startTest = np.array(test.iloc[:,:-1]) # test DataFrame
         self.startLabels = np.array(test.iloc[:,-1]) # test labels
         self.numerical = numerical # if data is numerical or not
+        if self.numerical:
+            self.media = treeInit.media
+            self.numerical_idx = treeInit.numerical_idx
         
     def _update_errs(self, sublab, currNode):
         """Updates self.errs with the err at the leaf of the tree
@@ -381,23 +385,11 @@ class applyTree:
         # print(split_on, self.attrNames)
         for child in currNode.children:
             nextNode = child
-            subVal = child.valName
-            # if not numerical, get the next attr subset and its labels and do again
-            if self.numerical==False or isinstance(subVal, str):
-                # print(split_idx)
-                newidx = np.array(subset[:,split_idx] == subVal)
-                # print(newidx)
-                nextSubset = subset[newidx]
-                nextLabels = sublab[newidx]
-                self._applyRec(nextNode, nextSubset, nextLabels)
-            # for numerical data, the median value was stored in the node, split on that
-            else:
-                above_median = subVal[1]
-                if above_median:
-                    nextSubset = subset[subset[split_on] > subVal[0]]
-                else:
-                    nextSubset = subset[subset[split_on] <= subVal[0]]
-                self._applyRec(nextNode, nextSubset)
+            subVal = child.valName           
+            newidx = np.array(subset[:,split_idx] == subVal)
+            nextSubset = subset[newidx]
+            nextLabels = sublab[newidx]
+            self._applyRec(nextNode, nextSubset, nextLabels)
       
 def run_ID3(self):
     """runs the ID3 algo, give it an initialized decisionTree object
@@ -424,6 +416,9 @@ def apply_ID3(self):
     currNode = self.root # root node of tree
     allTest = self.startTest # test data
     allLabels = self.startLabels # test labels
+    if self.numerical:
+        for idx in self.numerical_idx:
+            allTest[:,idx] = allTest[:,idx].copy() > self.media[idx]
     self._applyRec(currNode, allTest, allLabels) # run apply tree    
     errdf = self.errs # updated error df
     total_err = np.sum(errdf['Acc'])/len(errdf) # calculate total error
