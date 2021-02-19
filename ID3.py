@@ -227,7 +227,7 @@ class decisionTree:
         # find median, split if > (True) or <= (False) median, update self.attrClone
         for attr in numAttrID:
             median = np.median(self.attributes[idx, attr])
-            self.attrClone[:,attr] = self.attributes[:,attr] <= median
+            self.attrClone[:,attr] = self.attributes[:,attr] > median
     
     def _ID3Rec(self, idx, attrNames, node, prevMax=None):
         """function for the recursive part of ID3
@@ -327,7 +327,7 @@ class applyTree:
         self.startLabels = labelsTest # test labels
         self.numerical = numerical # if data is numerical or not
         
-    def _update_errs(self, subLabel, currNode):
+    def _update_errs(self, subset, currNode):
         """Updates self.errs with the err at the leaf of the tree
 
         Parameters
@@ -340,10 +340,10 @@ class applyTree:
         None.
         """
         # labels of test data subset
-        test_lab = np.array(subLabel.copy())
+        test_lab = subset.iloc[:,-1]
         # get value of node, make same len as test_lab, and find if they are the same
         trainLabel = [currNode.attribute]
-        train_lab = np.array(trainLabel*len(subLabel))
+        train_lab = np.array(trainLabel*len(test_lab))
         acc = train_lab == test_lab
         # make df and append to errs
         labdict = {'Test Labels': test_lab,
@@ -351,7 +351,7 @@ class applyTree:
                    'Acc': acc}
         self.errs = self.errs.append(pd.DataFrame(labdict))
         
-    def _applyRec(self, currNode, subset, subLabel):
+    def _applyRec(self, currNode, subset):
         """Main function for traversing the tree
 
         Parameters
@@ -367,8 +367,7 @@ class applyTree:
         """
         # if we hit a leaf, update the errs df and return None
         if currNode.leaf:
-            # print(subLabel)
-            self._update_errs(subLabel, currNode)
+            self._update_errs(subset, currNode)
             return
         # split on the attribute of the node, loop through node children
         split_on = currNode.attribute
@@ -380,18 +379,18 @@ class applyTree:
             # print(subVal, split_on)
             if not (isinstance(subVal[0], (int, float)) and self.numerical):       
                 nextSubset = subset[subset[split_on] == subVal]
-                nextLabels = subLabel[subset[split_on] == subVal]
-                self._applyRec(nextNode, nextSubset, nextLabels)
+                # nextLabels = subLabel[subset[split_on] == subVal]
+                self._applyRec(nextNode, nextSubset)
             # for numerical data, the median value was stored in the node, split on that
             else:
-                below_median = subVal[1]
-                if below_median:
-                    nextSubset = subset[subset[split_on] <= subVal[0]]
-                    nextLabels = subLabel[subset[split_on] <= subVal[0]]
-                else:
+                above_median = subVal[1]
+                if above_median:
                     nextSubset = subset[subset[split_on] > subVal[0]]
-                    nextLabels = subLabel[subset[split_on] > subVal[0]]
-                self._applyRec(nextNode, nextSubset, nextLabels)
+                    # nextLabels = subLabel[subset[split_on] > subVal[0]]
+                else:
+                    nextSubset = subset[subset[split_on] <= subVal[0]]
+                    # nextLabels = subLabel[subset[split_on] <= subVal[0]]
+                self._applyRec(nextNode, nextSubset)
       
 def run_ID3(self):
     """runs the ID3 algo, give it an initialized decisionTree object
@@ -416,8 +415,8 @@ def apply_ID3(self):
     """
     currNode = self.root # root node of tree
     allTest = self.startTest # test data
-    allLabels = self.startLabels # test labels
-    self._applyRec(currNode, allTest, allLabels) # run apply tree    
+    # allLabels = self.startLabels # test labels
+    self._applyRec(currNode, allTest) # run apply tree    
     errdf = self.errs # updated error df
     total_err = np.sum(errdf['Acc'])/len(errdf) # calculate total error
     
