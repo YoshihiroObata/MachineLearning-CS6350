@@ -14,16 +14,12 @@ class tester:
     """Tester class that gives errors for varying depths and methods 
     
     """
-    def __init__(self, methods, attrNames, datTrain, datTest, depths, 
+    def __init__(self, methods, dfs, depths, 
                  numerical=False, tie=True):
         self.methods = methods
-        self.attrNames = attrNames
-        self.dfTrain = datTrain[2]
-        self.attrsTrain = datTrain[0]
-        self.labelsTrain = datTrain[1]
-        self.dfTest = datTest[2]
-        self.attrsTest = datTest[0]
-        self.labelsTest = datTest[1]
+        self.attrNames = np.array(dfs[0].columns[:-1])
+        self.dfTrain = dfs[0]
+        self.dfTest = dfs[1]
         self.depths = np.linspace(1,depths,depths)
         self.numerical = numerical
         self.train_err = np.zeros((len(methods), len(self.depths)))
@@ -65,9 +61,7 @@ class tester:
                 # initialize and make decision tree with specified depth and method
                 treeInit = None
                 dt = None
-                treeInit = decisionTree(self.attrsTrain, self.attrNames, 
-                                        self.labelsTrain,
-                                        depth=d, method=method, 
+                treeInit = decisionTree(self.dfTrain, depth=d, method=method, 
                                         numerical=self.numerical,
                                         randTieBreak = self.tie)
                 print('Creating DT with depth limit: {} and method: {}...'.format(d, method))
@@ -83,4 +77,5 @@ class tester:
                                                          numerical=self.numerical)
                 print('Applying complete\n')
         print('Done')
+        
         return self.train_err, self.test_err

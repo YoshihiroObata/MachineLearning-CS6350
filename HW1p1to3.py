@@ -3,7 +3,7 @@
 HW 1: Problem 1
 
 Decision Trees: checking hand calcs and running a few examples. Uses the ID3
-file.
+file. CODE ONLY WORKED WITH OLD VERSION. USELESS NOW
 
 @ author: Yoshihiro Obata
 """

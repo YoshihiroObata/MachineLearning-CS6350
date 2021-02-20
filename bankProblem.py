@@ -33,23 +33,12 @@ cols = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing',
         'previous', 'poutcome', 'y']
 train = pd.read_csv('bank/train.csv', names=cols)
 test = pd.read_csv('bank/test.csv', names=cols)
-    
-attrTrain = np.array(train.iloc[:,:-1])
-attrTest = np.array(test.iloc[:,:-1])
-attrNames = cols[:-1]
-labelsTrain = np.array(train.iloc[:,-1])
-labelsTest = np.array(test.iloc[:,-1])
-
-train_no_unk = replace_unk(train)
-test_no_unk = replace_unk(test)
-attrTrain_no_unk = np.array(train_no_unk.iloc[:,:-1])
-attrTest_no_unk = np.array(test_no_unk.iloc[:,:-1])
-labelsTrain_no_unk = np.array(train_no_unk.iloc[:,-1])
-labelsTest_no_unk = np.array(test_no_unk.iloc[:,-1])
+train_no_unk = replace_unk(train.copy())
+test_no_unk = replace_unk(test.copy())
 
 # %% training the ID3 algo for testing
 tic = time.perf_counter()
-bankTreeInit = decisionTree(attrTrain, attrNames, labelsTrain, numerical=True)
+bankTreeInit = decisionTree(train, numerical=True)
 bankTree = run_ID3(bankTreeInit)
 
 # % applying the ID3 algo for testing
@@ -59,26 +48,20 @@ toc = time.perf_counter()
 print('Time for bank code is {:0.4f} seconds.'.format(toc-tic))
 
 # %% making trees
-# takes a long time, might need to move somewhere so it's not storing everything
-# maybe combine with getting erros in new testing function
 tic = time.perf_counter()
 methods = ['entropy', 'ME', 'gini']
-depths = len(attrNames)
+depths = len(train.columns)-1
+dfs = [train, test]
 
-datTrain = [attrTrain, labelsTrain, train]
-datTest = [attrTest, labelsTest, test]
-
-errinit = tester(methods, attrNames, datTrain, datTest, depths=depths, 
+errinit = tester(methods, dfs, depths=depths, 
                  numerical=True)
 train_err_bank, test_err_bank = tester.test(errinit)
 
 # % testing for replaced unknown values
-# datTrain2 = [attrTrain_no_unk, labelsTrain_no_unk, train_no_unk]
-# datTest2 = [attrTest_no_unk, labelsTest_no_unk, test_no_unk]
-
-# errinit2 = tester(methods, attrNames, datTrain2, datTest2, depths=depths, 
-#                   numerical=True)
-# train_err_bank2, test_err_bank2 = tester.test(errinit2)
+dfs2 = [train_no_unk, test_no_unk]
+errinit2 = tester(methods, dfs2, depths=depths, 
+                  numerical=True)
+train_err_bank2, test_err_bank2 = tester.test(errinit2)
 toc = time.perf_counter()
 print('Time for bank code is {:0.4f} seconds.'.format(toc-tic))
 # %% plotting results and calc avgs
@@ -102,11 +85,11 @@ plt.ylim([0.82,1])
 plt.xlim([0,16])
 for spine in ax.spines:
     ax.spines[spine].set_linewidth(2)
-# plt.savefig('accuracyBANK.png', dpi = 150, bbox_inches = 'tight')
-# print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-#     avg_train[0], avg_train[1], avg_train[2]))
-# print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-#     avg_test[0], avg_test[1], avg_test[2]))
+plt.savefig('accuracyBANK.png', dpi = 150, bbox_inches = 'tight')
+print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+    avg_train[0].round(3), avg_train[1].round(3), avg_train[2].round(3)))
+print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+    avg_test[0], avg_test[1], avg_test[2]))
 
 # %% plotting results for replaced unknowns
 avg_train_no_unk = np.mean(train_err_bank2, axis=1)
@@ -126,8 +109,8 @@ plt.ylim([0.82,1])
 plt.xlim([0,16])
 for spine in ax.spines:
     ax2.spines[spine].set_linewidth(2)
-# plt.savefig('accuracyBANK2.png', dpi = 150, bbox_inches = 'tight')
-# print('\nTraining errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-#     avg_train_no_unk[0], avg_train_no_unk[1], avg_train_no_unk[2]))
-# print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-#     avg_test_no_unk[0], avg_test_no_unk[1], avg_test_no_unk[2]))
+plt.savefig('accuracyBANK2.png', dpi = 150, bbox_inches = 'tight')
+print('\nTraining errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+    avg_train_no_unk[0], avg_train_no_unk[1], avg_train_no_unk[2]))
+print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+    avg_test_no_unk[0].round(3), avg_test_no_unk[1].round(3), avg_test_no_unk[2].round(3)))

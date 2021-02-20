@@ -28,7 +28,7 @@ labelsTrain0 = np.array(train0.iloc[:,-1])
 labelsTest0 = np.array(test0.iloc[:,-1])
 
 # %% training the ID3 algo for testing
-carTreeInit = decisionTree(attrTrain0, attrNames0, labelsTrain0, method = 'entropy')
+carTreeInit = decisionTree(train0, method = 'entropy')
 carTree = run_ID3(carTreeInit)
 
 # %% applying the ID3 algo for testing
@@ -40,9 +40,10 @@ tic = time.perf_counter()
 methods = ['entropy', 'ME', 'gini']
 datTrain0 = [attrTrain0, labelsTrain0, train0]
 datTest0 = [attrTest0, labelsTest0, test0]
+dfs = [train0, test0]
 depths0 = len(attrNames0)
 
-errinit = tester(methods, attrNames0, datTrain0, datTest0, depths=depths0)
+errinit = tester(methods, dfs, depths=depths0)
 train_err_car, test_err_car = tester.test(errinit)
 toc = time.perf_counter()
 print('Time for car code is {:0.4f} seconds.'.format(toc-tic))
@@ -68,8 +69,12 @@ plt.ylim([0.65,1])
 plt.xlim([0.5,6])
 for spine in ax.spines:
     ax.spines[spine].set_linewidth(2)
-plt.savefig('accuracyCAR.png', dpi = 150, bbox_inches = 'tight')
-# print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-#     avg_train[0], avg_train[1], avg_train[2]))
-# print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
-#     avg_test[0], avg_test[1], avg_test[2]))
+celltext = np.array([avg_train, avg_test]).T.round(3)
+rows = ['Entropy','Majority\nError','Gini\nIndex']
+cols = ['Avg. Training\nAccuracy', 'Avg. Test\nAccuracy']
+
+# plt.savefig('accuracyCAR.png', dpi = 150, bbox_inches = 'tight')
+print('Training errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+    avg_train[0].round(3), avg_train[1].round(3), avg_train[2].round(3)))
+print('\nTesting errors:\nEntropy={}\nMajority Error={}\nGini Index={}'.format(
+    avg_test[0].round(3), avg_test[1].round(3), avg_test[2].round(3)))

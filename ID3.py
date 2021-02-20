@@ -38,14 +38,14 @@ class decisionTree:
     a random choice. If randTieBreak set to False, it will always pick the 
     first instance of max info gain.  
     """
-    def __init__(self, attributes, attrNames, labels, method = 'entropy', 
+    def __init__(self, df, method = 'entropy', 
                  depth = None, randTieBreak = True, numerical = False):
-        self.attributes = attributes # np array with columns as attributes
-        self.attrClone = attributes.copy() # clone to handle numerical data without altering orignal attributes
-        self.attrNames = attrNames # attribute names
-        self.labels = labels # np array of labels (target)
-        self.labelSet = list(set(labels)) # list of unique labels
-        self.labelCount = [list(labels).count(i) for i in self.labelSet] # list of number of a certain label
+        self.attributes = np.array(df.iloc[:,:-1]) # np array with columns as attributes
+        self.attrClone = self.attributes.copy() # clone to handle numerical data without altering orignal attributes
+        self.attrNames = np.array(df.columns[:-1]) # attribute names
+        self.labels = np.array(df.iloc[:,-1]) # np array of labels (target)
+        self.labelSet = list(set(self.labels)) # list of unique labels
+        self.labelCount = [list(self.labels).count(i) for i in self.labelSet] # list of number of a certain label
         self.node = None # node
         self.numerical = numerical # bool of if numerical data
         self.media = None
@@ -94,7 +94,6 @@ class decisionTree:
             entropy = 0
         else:
             for count in labelCount:
-                # ps = labelCount/len(idx)
                 ps = labelCount/sum(labelCount)
                 entropy = -(np.sum([p*np.log2(p) for p in ps if p != 0]))
 
@@ -283,13 +282,14 @@ class decisionTree:
         node.children = []
         # if its categorical, get vals in order, if not, just get them
         # NOTE: getting vals from attrClone which contains all data, not just subset
-        if isinstance(self.attrNames[0], str):
-            chosenAttrSet = set()
-            chosenAttrVals = [i for i in self.attrClone[:, bestAttridx] \
-                              if i not in chosenAttrSet and \
-                                  (chosenAttrSet.add(i) or True)]
-        else:
-            chosenAttrVals = list(set(self.attrClone[:, bestAttridx]))
+        # if isinstance(self.attrNames[0], str):
+        #     chosenAttrSet = set()
+        #     chosenAttrVals = [i for i in self.attrClone[:, bestAttridx] \
+        #                       if i not in chosenAttrSet and \
+        #                           (chosenAttrSet.add(i) or True)]
+        # else:
+        #     chosenAttrVals = list(set(self.attrClone[:, bestAttridx]))
+        chosenAttrVals = list(set(self.attrClone[:, bestAttridx]))
         
         for val in chosenAttrVals: # for all vals the attr can take:
             # make new child node, append it to child list, update depth
@@ -311,10 +311,10 @@ class decisionTree:
                                           prevMax=max(set(labelsAttr), key=labelsAttr.count))
                 # remove the attr we split on from attr names and run id3
             else:
-                if attrNames and bestAttr in attrNames:
+                if len(attrNames) != 0 and bestAttr in attrNames:
                     nextAttrs = attrNames.copy()
-                    nextAttrs.pop(attrNames.index(bestAttr))
-                    # print('next attr: ', nextAttrs, 'idx: ', childidx)
+                    idx2del = np.where(bestAttr == nextAttrs)[0][0]
+                    nextAttrs = np.delete(nextAttrs, idx2del)
                 child.next = self._ID3Rec(childidx, nextAttrs, child)
         
         return node # return tree root
@@ -369,7 +369,6 @@ class applyTree:
             node = currNode
             while not leaf:
                 split_on = node.attribute
-                # print(split_on)
                 split_idx = np.where(np.array(split_on == self.attrNames))[0][0]
                 nextval = subset[row,split_idx]
                 for child in node.children:
