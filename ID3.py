@@ -361,36 +361,26 @@ class applyTree:
                    'Result': train_lab,
                    'Acc': acc}
         self.errs = self.errs.append(pd.DataFrame(labdict))
-        
-    def _applyRec(self, currNode, subset, sublab):
-        """Main function for traversing the tree
-
-        Parameters
-        ----------
-        :currNode: current node in the tree
-        :subset: current subset of the test data
-
-        Returns
-        -------
-        None.
-
-        """
-        # if we hit a leaf, update the errs df and return None
-        if currNode.leaf:
-            self._update_errs(sublab, currNode)
-            return
-        # split on the attribute of the node, loop through node children
-        split_on = currNode.attribute
-        split_idx = np.where(np.array(split_on == self.attrNames))[0][0]
-        # print(split_on, self.attrNames)
-        for child in currNode.children:
-            nextNode = child
-            subVal = child.valName           
-            newidx = np.array(subset[:,split_idx] == subVal)
-            nextSubset = subset[newidx]
-            nextLabels = sublab[newidx]
-            self._applyRec(nextNode, nextSubset, nextLabels)
-      
+            
+    def _applyLoops(self, currNode, subset, sublab):
+        errs = np.zeros((len(sublab),))
+        for row in range(len(subset)):
+            leaf = False
+            node = currNode
+            while not leaf:
+                split_on = node.attribute
+                # print(split_on)
+                split_idx = np.where(np.array(split_on == self.attrNames))[0][0]
+                nextval = subset[row,split_idx]
+                for child in node.children:
+                    if child.valName == nextval:
+                        node = child
+                        break
+                if node.leaf == True:
+                    leaf = True 
+            errs[row] = sublab[row] == node.attribute
+        return errs
+    
 def run_ID3(self):
     """runs the ID3 algo, give it an initialized decisionTree object
 
@@ -419,8 +409,8 @@ def apply_ID3(self):
     if self.numerical:
         for idx in self.numerical_idx:
             allTest[:,idx] = allTest[:,idx].copy() > self.media[idx]
-    self._applyRec(currNode, allTest, allLabels) # run apply tree    
-    errdf = self.errs # updated error df
-    total_err = np.sum(errdf['Acc'])/len(errdf) # calculate total error
+
+    errs = self._applyLoops(currNode, allTest, allLabels) # run apply tree
+    total_err = np.sum(errs)/len(errs)
     
-    return errdf, total_err
+    return errs, total_err
