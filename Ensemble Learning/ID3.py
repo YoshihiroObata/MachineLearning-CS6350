@@ -72,10 +72,10 @@ class decisionTree:
             raise ValueError('Enter a depth between 1 and {}'.format(
                 len(self.attrNames)))
             
-        if weights:
-            self.weights = weights
+        if weights is None:
+            self.weights = np.ones((len(self.attributes),))    
         else:
-            self.weights = np.ones((len(self.attributes),))
+            self.weights = weights
             
     def _getEntropy(self, idx):
         """Calculates the entropy of a given list of indices of an attribute
@@ -195,6 +195,7 @@ class decisionTree:
         infoGain = self.gainMethod(idx) # total entropy
         # list of indices of an attribute
         attrVals = list(self.attributes[idx,attrID])
+        w = sum(self.weights[idx])
         attrSet = list(set(attrVals)) # list of unique vals for attrVals
         # np array of count of vals in each attribute
         attrSetCount = np.array([attrVals.count(i) for i in attrSet])
@@ -202,8 +203,10 @@ class decisionTree:
         # uses info gain method to calc info gain for the attr
         for value in range(len(attrSet)):
             attridx = [idx[i] for i in range(len(idx)) if attrVals[i] == attrSet[value]]
+            attr_w = sum(self.weights[attridx])
             gainSubset = self.gainMethod(attridx)
-            infoGainAttr += attrSetCount[value]/len(attrVals)*gainSubset
+            # infoGainAttr += attrSetCount[value]/len(attrVals)*gainSubset
+            infoGainAttr += attr_w/w*gainSubset
         infoGain -= infoGainAttr
         return infoGain
     
@@ -372,10 +375,10 @@ class applyTree:
         if self.numerical:
             self.media = treeInit.media
             self.numerical_idx = treeInit.numerical_idx
-        if weights:
-            self.weights = weights
+        if weights is None:
+            self.weights = np.ones((len(self.attributes),))    
         else:
-            self.weights = np.ones((len(self.startTest),))
+            self.weights = weights
     # def _update_errs(self, sublab, currNode):
     #     """Updates self.errs with the err at the leaf of the tree
 
@@ -448,7 +451,7 @@ def apply_ID3(self):
             allTest[:,idx] = allTest[:,idx].copy() > self.media[idx]
 
     errs = self._applyLoops(currNode, allTest, allLabels) # run apply tree
-    errs *= self.weights
-    total_err = np.sum(errs)/sum(self.weights)
+    weighted_errs = errs*self.weights
+    total_err = np.sum(weighted_errs)/sum(self.weights)
     
     return errs, total_err
