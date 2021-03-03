@@ -38,7 +38,8 @@ class decisionTree:
     first instance of max info gain.  
     """
     def __init__(self, df, method='entropy', depth=None, randTieBreak=True, 
-                 numerical=False, weights=None):
+                 numerical=False, weights=None, 
+                 small_sub=False, globaldf=None):
         self.attributes = np.array(df.iloc[:,:-1]) # np array with columns as attributes
         self.attrNames = np.array(df.columns[:-1]) # attribute names
         self.labels = np.array(df.iloc[:,-1]) # np array of labels (target)
@@ -70,7 +71,13 @@ class decisionTree:
             self.weights = np.ones((len(self.attributes),))    
         else:
             self.weights = weights
-            
+        
+        if small_sub:
+            self.small_sub = small_sub
+            self.globaldf = np.array(globaldf.iloc[:,:-1])
+        else:
+            self.small_sub = small_sub
+        
     def _getEntropy(self, idx):
         """Calculates the entropy of a given list of indices of an attribute
          
@@ -252,6 +259,8 @@ class decisionTree:
             # print(self.media)
             self.numerical_idx.append(attr)
             self.attributes[:,attr] = self.attributes[:,attr] > median
+            if self.small_sub:
+                self.globaldf[:,attr] = self.globaldf[:,attr] > median
     
     def _ID3Rec(self, idx, attrNames, node, prevMax=None):
         """function for the recursive part of ID3
@@ -296,7 +305,10 @@ class decisionTree:
         bestAttr, bestAttridx = self._getNextAttr(idx, attrNames)
         node.attribute = bestAttr
         node.children = []
-        chosenAttrVals = list(set(self.attributes[:, bestAttridx]))
+        if self.small_sub:
+            chosenAttrVals = list(set(self.globaldf[:, bestAttridx]))
+        else:
+            chosenAttrVals = list(set(self.attributes[:, bestAttridx]))
         
         for val in chosenAttrVals: # for all vals the attr can take:
             # make new child node, append it to child list, update depth
@@ -313,7 +325,7 @@ class decisionTree:
             if len(childidx)==0:               
                 child.next = self._ID3Rec(childidx, [], child, 
                                           prevMax=sub_common)
-                # remove the attr we split on from attr names and run id3
+            # remove the attr we split on from attr names and run id3
             else:
                 if len(attrNames) != 0 and bestAttr in attrNames:
                     nextAttrs = attrNames.copy()
@@ -346,6 +358,7 @@ class applyTree:
             self.weights = np.ones((len(self.startTest),))    
         else:
             self.weights = weights
+        self.predict = []
             
     def _applyLoops(self, currNode, subset, sublab):
         errs = np.zeros((len(sublab),))
@@ -354,7 +367,7 @@ class applyTree:
             node = currNode
             while not leaf:
                 split_on = node.attribute
-                split_idx = np.where(np.array(split_on == self.attrNames))[0][0]
+                split_idx = np.where(self.attrNames==split_on)[0]
                 nextval = subset[row,split_idx]
                 for child in node.children:
                     if child.valName == nextval:
@@ -363,6 +376,7 @@ class applyTree:
                 if node.leaf == True:
                     leaf = True 
             errs[row] = sublab[row] == node.attribute
+            self.predict.append(node.attribute)
         return errs
     
 def run_ID3(self):
@@ -393,7 +407,6 @@ def apply_ID3(self):
     if self.numerical:
         for idx in self.numerical_idx:
             allTest[:,idx] = allTest[:,idx].copy() > self.media[idx]
-
     errs = self._applyLoops(currNode, allTest, allLabels) # run apply tree
     weighted_errs = errs*self.weights
     total_err = np.sum(weighted_errs)/sum(self.weights)
