@@ -8,7 +8,6 @@ class as well as an applying tree class and applying function
 """
 # Importing Packages
 import numpy as np
-import pandas as pd
 import random
  
 # Classes
@@ -41,19 +40,14 @@ class decisionTree:
     def __init__(self, df, method='entropy', depth=None, randTieBreak=True, 
                  numerical=False, weights=None):
         self.attributes = np.array(df.iloc[:,:-1]) # np array with columns as attributes
-        self.attrClone = self.attributes.copy() # clone to handle numerical data without altering orignal attributes
         self.attrNames = np.array(df.columns[:-1]) # attribute names
         self.labels = np.array(df.iloc[:,-1]) # np array of labels (target)
         self.labelSet = list(set(self.labels)) # list of unique labels
-        self.labelCount = [list(self.labels).count(i) for i in self.labelSet] # list of number of a certain label
         self.node = None # node
         self.numerical = numerical # bool of if numerical data
         self.media = None
         self.numerical_idx = []
-        if randTieBreak:
-            self.randPick = True # pick random info gain attrName if tied 
-        else:
-            self.randPick = False
+        self.randPick = randTieBreak # pick random info gain attrName if tied 
         
         # setting the gain method
         if method == 'entropy':
@@ -90,24 +84,21 @@ class decisionTree:
         
         :entropy: the log2 entropy of the attribute
         """
-        labels = [self.labels[i] for i in idx] # remaking the labels
+        labels = self.labels[idx] # remaking the labels
         weights = self.weights[idx]
-        
         # np array of label count
-        # labelCount = np.array([labels.count(i) for i in self.labelSet])
         
         labelCount = np.zeros((len(self.labelSet),))
         for i, lab in enumerate(self.labelSet):
             setidx = np.array(labels) == lab
-            setweight = np.ones((sum(setidx),))*weights[setidx]
-            labelCount[i] = sum(setweight)
-
+            labelCount[i] = sum(weights[setidx])
+        
         if len(labelCount[labelCount != 0]) == 1:
             entropy = 0
         else:
-            for count in labelCount:
-                ps = labelCount/sum(labelCount)
-                entropy = -(np.sum([p*np.log2(p) for p in ps if p != 0]))
+            ps = labelCount/sum(labelCount)
+            ps = ps[ps != 0]
+            entropy = -(np.sum(ps*np.log2(ps)))
 
         return entropy    
     
@@ -124,20 +115,14 @@ class decisionTree:
         
         :ME: the majority error of the attribute
         """
-        labels = [self.labels[i] for i in idx] # remaking the labels
+        labels = self.labels[idx] # remaking the labels
         weights = self.weights[idx]
-        
-        # np array of label count
-        # labelCount = np.array([labels.count(i) for i in self.labelSet])
         
         labelCount = np.zeros((len(self.labelSet),))
         for i, lab in enumerate(self.labelSet):
             setidx = np.array(labels) == lab
-            setweight = np.ones((sum(setidx),))*weights[setidx]
-            labelCount[i] = sum(setweight)
+            labelCount[i] = sum(weights[setidx])
         
-        # np array of label count
-        # labelCount = np.array([labels.count(i) for i in self.labelSet])
         # for each unique label, calculate majority error
         majority = max(labelCount)
         ME = 1 - majority/sum(labelCount)
@@ -157,24 +142,18 @@ class decisionTree:
         
         :gini: the Gini index of the attribute
         """
-        labels = [self.labels[i] for i in idx] # remaking the labels
+        labels = self.labels[idx] # remaking the labels
         # np array of label count
-        weights = self.weights[idx]
-        
+        weights = self.weights[idx]   
         # np array of label count
-        # labelCount = np.array([labels.count(i) for i in self.labelSet])
         
         labelCount = np.zeros((len(self.labelSet),))
         for i, lab in enumerate(self.labelSet):
             setidx = np.array(labels) == lab
-            setweight = np.ones((sum(setidx),))*weights[setidx]
-            labelCount[i] = sum(setweight)
-        # w_labels = [sum(self.weights[idx])]
-        # labelCount = np.array([labels.count(i) for i in self.labelSet])
+            labelCount[i] = sum(weights[setidx])
         # for each unique label, calculate gini
-        for count in labelCount:
-            ps = labelCount/sum(labelCount)
-            gini = 1 - (np.sum([p**2 for p in ps]))
+        ps = labelCount/sum(labelCount)
+        gini = 1 - (np.sum(ps**2))
             
         return gini
     
@@ -194,18 +173,16 @@ class decisionTree:
         """
         infoGain = self.gainMethod(idx) # total entropy
         # list of indices of an attribute
-        attrVals = list(self.attributes[idx,attrID])
+        attrVals = self.attributes[idx,attrID]
         w = sum(self.weights[idx])
         attrSet = list(set(attrVals)) # list of unique vals for attrVals
-        # np array of count of vals in each attribute
-        attrSetCount = np.array([attrVals.count(i) for i in attrSet])
         infoGainAttr = 0
         # uses info gain method to calc info gain for the attr
         for value in range(len(attrSet)):
-            attridx = [idx[i] for i in range(len(idx)) if attrVals[i] == attrSet[value]]
+            idxloc = np.where(attrVals == attrSet[value])[0]
+            attridx = list(idx[list(idxloc)])
             attr_w = sum(self.weights[attridx])
             gainSubset = self.gainMethod(attridx)
-            # infoGainAttr += attrSetCount[value]/len(attrVals)*gainSubset
             infoGainAttr += attr_w/w*gainSubset
         infoGain -= infoGainAttr
         return infoGain
@@ -233,11 +210,15 @@ class decisionTree:
         # if you want to pick randomly, get the tied indices and do a random choice
         if self.randPick:
             maxGain = np.array(attrInfoGain) == max(attrInfoGain)
-            tieidx = [i for i in range(len(maxGain)) if maxGain[i] == True]
-            randidx = random.choice(tieidx)
-            
-            bestAttr = attrNames[attrInfoGain.index(attrInfoGain[randidx])]
-            bestAttridx = attrIDs[attrInfoGain.index(attrInfoGain[randidx])]
+            if sum(maxGain) != 1:
+                tieidx = [i for i in range(len(maxGain)) if maxGain[i] == True]
+                randidx = random.choice(tieidx)
+                bestAttr = attrNames[attrInfoGain.index(attrInfoGain[randidx])]
+                bestAttridx = attrIDs[attrInfoGain.index(attrInfoGain[randidx])]
+            else:
+                bestAttr = attrNames[attrInfoGain.index(max(attrInfoGain))]
+                bestAttridx = attrIDs[attrInfoGain.index(max(attrInfoGain))]
+                
         # if not random, max picks the first thing
         else:
             bestAttr = attrNames[attrInfoGain.index(max(attrInfoGain))]
@@ -246,7 +227,7 @@ class decisionTree:
         return bestAttr, bestAttridx
     
     def _num2Bool(self, idx, attrNames):
-        """ Changes the self.attrClone variable to a boolean of > and <= median
+        """ Changes the self.attributes variable to a boolean of > and <= median
 
         Parameters
         ----------
@@ -258,11 +239,11 @@ class decisionTree:
         None.
         """
         # get the attr indices, get the first value of these attributes
-        attrIDs = [i for i in range(len(self.attrNames)) if self.attrNames[i] in attrNames]
-        attrID_type = [self.attributes[0,i] for i in attrIDs]
+        attrIDs = list(range(len(self.attrNames)))
+        attrID_type = self.attributes[0,attrIDs]
         # get the attr index if the first val is a float or int
         numAttrID = [ID for i, ID in enumerate(attrIDs) if isinstance(attrID_type[i], (float,int))]
-        # find median, split if > (True) or <= (False) median, update self.attrClone
+        # find median, split if > (True) or <= (False) median, update self.attributes
         self.media = np.zeros((len(attrNames),))
         for attr in numAttrID:
             median = np.median(self.attributes[idx, attr])
@@ -270,7 +251,7 @@ class decisionTree:
             self.media[attr] = median
             # print(self.media)
             self.numerical_idx.append(attr)
-            self.attrClone[:,attr] = self.attributes[:,attr] > median
+            self.attributes[:,attr] = self.attributes[:,attr] > median
     
     def _ID3Rec(self, idx, attrNames, node, prevMax=None):
         """function for the recursive part of ID3
@@ -288,7 +269,8 @@ class decisionTree:
         # if not Node, make a node
         if not node: 
             node = Node()
-        labelsAttr = [self.labels[i] for i in idx] # get labels for all idx
+        labelsAttr = self.labels[idx] # get labels for all idx
+        
         # stopping conditions:
         # if there's only 1 label, return node with attribute label that is leaf
         if len(set(labelsAttr)) == 1:
@@ -296,37 +278,25 @@ class decisionTree:
             node.leaf = True
             return node
         # if there's no attrNames, return the node as leaf node
-        if len(idx) == 0:
+        elif len(idx) == 0:
             # print('this happened')
             node.attribute = prevMax
             node.leaf = True
             return node
+        
+        unique, pos = np.unique(labelsAttr, return_inverse=True)
+        sub_common = unique[np.argmax(np.bincount(pos))]
+        
         # if you hit depth limit, set the node attr to the max in the subset
         if node.depth == self.depthLimit:
-            node.attribute = max(set(labelsAttr), key=labelsAttr.count)
+            node.attribute = sub_common
             node.leaf = True
             return node
-        
-        # set attrClone to attrs and if numerical, convert to bool
-        # self.attrClone = self.attributes.copy()
-        # if self.numerical:
-            # self._num2Bool(idx, attrNames)
-        
-        # get best attr, set this node attr to best one, init child list
-        # print(idx, labelsAttr, attrNames)
+
         bestAttr, bestAttridx = self._getNextAttr(idx, attrNames)
         node.attribute = bestAttr
         node.children = []
-        # if its categorical, get vals in order, if not, just get them
-        # NOTE: getting vals from attrClone which contains all data, not just subset
-        # if isinstance(self.attrNames[0], str):
-        #     chosenAttrSet = set()
-        #     chosenAttrVals = [i for i in self.attrClone[:, bestAttridx] \
-        #                       if i not in chosenAttrSet and \
-        #                           (chosenAttrSet.add(i) or True)]
-        # else:
-        #     chosenAttrVals = list(set(self.attrClone[:, bestAttridx]))
-        chosenAttrVals = list(set(self.attrClone[:, bestAttridx]))
+        chosenAttrVals = list(set(self.attributes[:, bestAttridx]))
         
         for val in chosenAttrVals: # for all vals the attr can take:
             # make new child node, append it to child list, update depth
@@ -334,18 +304,15 @@ class decisionTree:
             # node.children.append(child)
             child.depth = node.depth + 1
             # if the data is numerical, set child val to the median value, else, make it val
-            # if self.numerical and (bestAttridx in self.numerical_idx):
-            #     child.valName = (self.media[bestAttridx], val)
-            # else:
-            #     child.valName = val
             child.valName = val
             # get indices of child
             node.children.append(child)
-            childidx = [i for i in idx if self.attrClone[i, bestAttridx] == val]
+            idxloc = np.where(self.attributes[idx, bestAttridx] == val)[0]
+            childidx = idx[list(idxloc)]
             # if no children with this attr value, give empty list and run id3
-            if not childidx:               
+            if len(childidx)==0:               
                 child.next = self._ID3Rec(childidx, [], child, 
-                                          prevMax=max(set(labelsAttr), key=labelsAttr.count))
+                                          prevMax=sub_common)
                 # remove the attr we split on from attr names and run id3
             else:
                 if len(attrNames) != 0 and bestAttr in attrNames:
@@ -366,7 +333,7 @@ class applyTree:
     """
     def __init__(self, trainedTree, test, treeInit, numerical=False, 
                  weights=None):
-        self.errs = pd.DataFrame(columns=['Test Labels', 'Result', 'Acc']) # make err df
+        # self.errs = pd.DataFrame(columns=['Test Labels', 'Result', 'Acc']) # make err df
         self.root = trainedTree # root is the whole trained tree
         self.attrNames = np.array(test.columns)
         self.startTest = np.array(test.iloc[:,:-1]) # test DataFrame
@@ -376,32 +343,9 @@ class applyTree:
             self.media = treeInit.media
             self.numerical_idx = treeInit.numerical_idx
         if weights is None:
-            self.weights = np.ones((len(self.attributes),))    
+            self.weights = np.ones((len(self.startTest),))    
         else:
             self.weights = weights
-    # def _update_errs(self, sublab, currNode):
-    #     """Updates self.errs with the err at the leaf of the tree
-
-    #     Parameters
-    #     ----------
-    #     :sublab: labels of the test data subset that took the branches to list node
-    #     :currNode : the leaf node in the tree we are at
-
-    #     Returns
-    #     -------
-    #     None.
-    #     """
-    #     # labels of test data subset
-    #     test_lab = sublab
-    #     # get value of node, make same len as test_lab, and find if they are the same
-    #     trainLabel = [currNode.attribute]
-    #     train_lab = np.array(trainLabel*len(test_lab))
-    #     acc = train_lab == test_lab
-    #     # make df and append to errs
-    #     labdict = {'Test Labels': test_lab,
-    #                'Result': train_lab,
-    #                'Acc': acc}
-    #     self.errs = self.errs.append(pd.DataFrame(labdict))
             
     def _applyLoops(self, currNode, subset, sublab):
         errs = np.zeros((len(sublab),))
@@ -428,7 +372,7 @@ def run_ID3(self):
     -------
     :self.node: the root node of the whole tree
     """
-    idx = list(range(len(self.attributes))) # all indices of attributes
+    idx = np.arange(len(self.attributes)) # all indices of attributes
     attrNames = self.attrNames.copy() # attribute names
     if self.numerical:
         self._num2Bool(idx, attrNames)
