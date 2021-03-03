@@ -6,7 +6,6 @@ Created on Tue Mar  2 14:52:18 2021
 """
 # %%
 import pandas as pd
-import numpy as np
 from AdaBoost import AdaBoost, run_adaBoost
 from Bagging import Bagging, run_bagging, apply_bagging
 
@@ -24,8 +23,11 @@ learners, alphas = run_adaBoost(adaInit)
 # %% bagging
 key = {'no':-1, 'yes':1}
 bagInit = Bagging(100, 10, train, numerical=True, key=key)
-# trees, votes = run_bagging(bagInit)
 run_bagging(bagInit)
-err = apply_bagging(bagInit, train)
+err_bag = apply_bagging(bagInit, train)
 
-# %%
+# %% random forest
+key = {'no':-1, 'yes':1}
+forestInit = Bagging(100, 10, train, numerical=True, key=key, randForest=True)
+run_bagging(forestInit)
+err_forest = apply_bagging(forestInit, train)

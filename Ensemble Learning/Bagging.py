@@ -12,7 +12,8 @@ class Bagging:
     """
     
     """
-    def __init__(self, m, T, data, numerical=False, key=None):
+    def __init__(self, m, T, data, numerical=False, key=None, 
+                 randForest=False):
         self.mp = m
         self.T = T
         self.data = data
@@ -27,6 +28,7 @@ class Bagging:
             self.globaldf = data.copy()
         else:
             self.small_sub = False
+        self.randForest = randForest
         
     def draw_with_replacement(self):
         idx = random.choices(np.arange(len(self.data)), k=self.mp)
@@ -55,7 +57,8 @@ class Bagging:
             if self.small_sub:
                 tree_init = decisionTree(bootstrap, numerical=self.numerical,
                                          small_sub=self.small_sub,
-                                         globaldf=self.globaldf)
+                                         globaldf=self.globaldf,
+                                         randForest=self.randForest)
             else:
                 tree_init = decisionTree(bootstrap, numerical=self.numerical)
             self.treesInit.append(tree_init)
@@ -67,6 +70,7 @@ class Bagging:
         return self.trees, self.alpha
 
     def _map2posneg(self, h, key):
+        # print(h)
         h_mapped = [key[i] for i in h]
         return np.array(h_mapped)    
 

@@ -39,7 +39,7 @@ class decisionTree:
     """
     def __init__(self, df, method='entropy', depth=None, randTieBreak=True, 
                  numerical=False, weights=None, 
-                 small_sub=False, globaldf=None):
+                 small_sub=False, globaldf=None, randForest=False):
         self.attributes = np.array(df.iloc[:,:-1]) # np array with columns as attributes
         self.attrNames = np.array(df.columns[:-1]) # attribute names
         self.labels = np.array(df.iloc[:,-1]) # np array of labels (target)
@@ -77,6 +77,8 @@ class decisionTree:
             self.globaldf = np.array(globaldf.iloc[:,:-1])
         else:
             self.small_sub = small_sub
+            
+        self.randForest = randForest
         
     def _getEntropy(self, idx):
         """Calculates the entropy of a given list of indices of an attribute
@@ -210,6 +212,7 @@ class decisionTree:
         :bestAttr: name of the next attribute    
         :bestAttridx: index (col #) of the best attribute in self.attributes
         """
+        
         # get the attr indices and calculate the info gain of them
         attrIDs = [i for i in range(len(self.attrNames)) if self.attrNames[i] in attrNames]
         attrInfoGain = [self._getInfoGain(idx, attrID) for attrID in attrIDs]
@@ -275,6 +278,14 @@ class decisionTree:
         -------
         node : node object of root for the root node called in ID3Rec
         """
+        if self.randForest:
+            Gsize = round(np.sqrt(len(attrNames)))
+            attrNames_raw = np.random.choice(attrNames, Gsize, replace=False)
+            attrNames = [self.attrNames[i] for i in range(
+                len(self.attrNames)) if self.attrNames[i] in attrNames_raw]
+            attrNames = np.array(attrNames)
+        # print(self.attrNames)
+        
         # if not Node, make a node
         if not node: 
             node = Node()
@@ -292,6 +303,10 @@ class decisionTree:
             node.attribute = prevMax
             node.leaf = True
             return node
+        elif len(attrNames) == 0:
+            node.attribute = prevMax
+            node.leaf = True
+            return node
         
         unique, pos = np.unique(labelsAttr, return_inverse=True)
         sub_common = unique[np.argmax(np.bincount(pos))]
@@ -301,8 +316,9 @@ class decisionTree:
             node.attribute = sub_common
             node.leaf = True
             return node
-
+        
         bestAttr, bestAttridx = self._getNextAttr(idx, attrNames)
+        # print(bestAttr, bestAttridx)
         node.attribute = bestAttr
         node.children = []
         if self.small_sub:
@@ -331,7 +347,8 @@ class decisionTree:
                     nextAttrs = attrNames.copy()
                     idx2del = np.where(bestAttr == nextAttrs)[0][0]
                     nextAttrs = np.delete(nextAttrs, idx2del)
-                child.next = self._ID3Rec(childidx, nextAttrs, child)
+                child.next = self._ID3Rec(childidx, nextAttrs, child, 
+                                          prevMax=sub_common)
         
         return node # return tree root
   
