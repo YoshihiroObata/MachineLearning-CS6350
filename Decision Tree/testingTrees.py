@@ -76,6 +76,6 @@ class tester:
                                                          treeInit,
                                                          numerical=self.numerical)
                 print('Applying complete\n')
-        print('Done')
+        print('Done\n')
         
         return self.train_err, self.test_err

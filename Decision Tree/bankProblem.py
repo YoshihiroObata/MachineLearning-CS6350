@@ -7,10 +7,7 @@ Hw1, bank problem
 # %% import packages
 import numpy as np
 import pandas as pd
-from ID3 import decisionTree
-from ID3 import run_ID3
-from ID3 import applyTree
-from ID3 import apply_ID3
+from ID3 import decisionTree, run_ID3, applyTree, apply_ID3
 from testingTrees import tester
 import matplotlib.pyplot as plt
 import time
