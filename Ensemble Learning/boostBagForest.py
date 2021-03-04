@@ -28,6 +28,7 @@ err_bag = apply_bagging(bagInit, train)
 
 # %% random forest
 key = {'no':-1, 'yes':1}
-forestInit = Bagging(100, 10, train, numerical=True, key=key, randForest=True)
+forestInit = Bagging(1000, 50, train, numerical=True, key=key, randForest=True,
+                     Gsize=6)
 run_bagging(forestInit)
 err_forest = apply_bagging(forestInit, train)

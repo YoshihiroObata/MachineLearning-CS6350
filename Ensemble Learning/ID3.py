@@ -39,7 +39,7 @@ class decisionTree:
     """
     def __init__(self, df, method='entropy', depth=None, randTieBreak=True, 
                  numerical=False, weights=None, 
-                 small_sub=False, globaldf=None, randForest=False):
+                 small_sub=False, globaldf=None, randForest=False, Gsize=6):
         self.attributes = np.array(df.iloc[:,:-1]) # np array with columns as attributes
         self.attrNames = np.array(df.columns[:-1]) # attribute names
         self.labels = np.array(df.iloc[:,-1]) # np array of labels (target)
@@ -79,6 +79,7 @@ class decisionTree:
             self.small_sub = small_sub
             
         self.randForest = randForest
+        self.Gsize = Gsize
         
     def _getEntropy(self, idx):
         """Calculates the entropy of a given list of indices of an attribute
@@ -278,12 +279,17 @@ class decisionTree:
         -------
         node : node object of root for the root node called in ID3Rec
         """
+        
         if self.randForest:
-            Gsize = round(np.sqrt(len(attrNames)))
-            attrNames_raw = np.random.choice(attrNames, Gsize, replace=False)
-            attrNames = [self.attrNames[i] for i in range(
-                len(self.attrNames)) if self.attrNames[i] in attrNames_raw]
-            attrNames = np.array(attrNames)
+            if len(attrNames) > self.Gsize:
+                attrNames_raw = np.random.choice(attrNames, self.Gsize, replace=False)
+                attrNames2 = [self.attrNames[i] for i in range(
+                    len(self.attrNames)) if self.attrNames[i] in attrNames_raw]
+                attrNames2 = np.array(attrNames)
+            else:
+                attrNames2 = attrNames
+        else:
+            attrNames2 = attrNames
         # print(self.attrNames)
         
         # if not Node, make a node
@@ -317,7 +323,7 @@ class decisionTree:
             node.leaf = True
             return node
         
-        bestAttr, bestAttridx = self._getNextAttr(idx, attrNames)
+        bestAttr, bestAttridx = self._getNextAttr(idx, attrNames2)
         # print(bestAttr, bestAttridx)
         node.attribute = bestAttr
         node.children = []

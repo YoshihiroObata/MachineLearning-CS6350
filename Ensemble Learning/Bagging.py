@@ -13,7 +13,7 @@ class Bagging:
     
     """
     def __init__(self, m, T, data, numerical=False, key=None, 
-                 randForest=False):
+                 randForest=False, Gsize=6):
         self.mp = m
         self.T = T
         self.data = data
@@ -29,9 +29,10 @@ class Bagging:
         else:
             self.small_sub = False
         self.randForest = randForest
+        self.Gsize = Gsize
         
     def draw_with_replacement(self):
-        idx = random.choices(np.arange(len(self.data)), k=self.mp)
+        idx = np.random.choice(np.arange(len(self.data)), self.mp)
         return self.data.iloc[list(idx)]
     
     def _bag_progress(self, t):
@@ -58,9 +59,11 @@ class Bagging:
                 tree_init = decisionTree(bootstrap, numerical=self.numerical,
                                          small_sub=self.small_sub,
                                          globaldf=self.globaldf,
-                                         randForest=self.randForest)
+                                         randForest=self.randForest,
+                                         Gsize=self.Gsize)
             else:
-                tree_init = decisionTree(bootstrap, numerical=self.numerical)
+                tree_init = decisionTree(bootstrap, numerical=self.numerical,
+                                         Gsize=self.Gsize)
             self.treesInit.append(tree_init)
             tree = run_ID3(tree_init)
             self.trees.append(tree)
