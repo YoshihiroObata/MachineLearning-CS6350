@@ -6,7 +6,9 @@ Created on Tue Mar  2 20:57:48 2021
 """
 import numpy as np
 from ID3 import decisionTree, run_ID3, applyTree, apply_ID3
-import random
+import multiprocessing
+from itertools import product
+
 
 class Bagging:
     """
@@ -20,12 +22,11 @@ class Bagging:
         self.errs = np.zeros((T,))
         self.alpha = np.zeros((T,))
         self.treesInit = []
-        self.trees = []
         self.numerical = numerical
         self.key = key
         if m < 0.5*len(data):
             self.small_sub = True
-            self.globaldf = data.copy()
+            self.globaldf = data
         else:
             self.small_sub = False
         self.randForest = randForest
@@ -37,16 +38,15 @@ class Bagging:
     
     def _bag_progress(self, t):
         percent = np.round(100*t/self.T)
-        if len(self.trees) != self.T:        
+        if len(self.treesInit) != self.T:        
             print(f'{percent}% done. {t} trees created...')
         else:
             print(f'{percent}% done. {t} trees applied...')
     
-    def _calc_vote(self, tree, tree_init, t, numerical=False):
-        err_init = applyTree(tree, self.data, tree_init, 
+    def _calc_vote(self, tree_init, t, numerical=False):
+        err_init = applyTree(self.data, tree_init, 
                              numerical=numerical)
-        h_t, total_acc = apply_ID3(err_init)
-        total_err = 1 - total_acc
+        h_t, total_err = apply_ID3(err_init)
         self.errs[t] = total_err
         self.alpha[t] = 0.5*np.log((1 - total_err)/total_err)
         
@@ -65,41 +65,71 @@ class Bagging:
                 tree_init = decisionTree(bootstrap, numerical=self.numerical,
                                          Gsize=self.Gsize)
             self.treesInit.append(tree_init)
-            tree = run_ID3(tree_init)
-            self.trees.append(tree)
+            run_ID3(tree_init)
             
-            self._calc_vote(tree, tree_init, t, numerical=self.numerical)
-        print('100% done.\n')
-        return self.trees, self.alpha
+            self._calc_vote(tree_init, t, numerical=self.numerical)
 
     def _map2posneg(self, h, key):
-        # print(h)
         h_mapped = [key[i] for i in h]
         return np.array(h_mapped)    
 
     def _apply_bagging_loop(self, data):
-        H_final_raw = 0
+        predicts = []
         for t in range(self.T):
             if (t)%np.round(self.T/10) == 0:
                 self._bag_progress(t)
-            applyInit = applyTree(self.trees[t], data, self.treesInit[t],
+            applyInit = applyTree(data, self.treesInit[t],
                                   numerical=self.numerical)
-            errs, _ = apply_ID3(applyInit)
-            h = self._map2posneg(applyInit.predict, key=self.key)
-            H_final_raw += self.alpha[t]*h
+            apply_ID3(applyInit)
+            predicts.append(applyInit.predict)
         print('100% done.\n')    
-        
-        return H_final_raw
+        return predicts
+   
+# def bagging_loop2(t, bag_init):
+#     # for t in range(self.T):
+#     if (t)%np.round(bag_init.T/10) == 0:
+#         bag_init._bag_progress(t)
+#     bootstrap = bag_init.draw_with_replacement()
+#     if bag_init.small_sub:
+#         tree_init = decisionTree(bootstrap, numerical=bag_init.numerical,
+#                                  small_sub=bag_init.small_sub,
+#                                  globaldf=bag_init.globaldf,
+#                                  randForest=bag_init.randForest,
+#                                  Gsize=bag_init.Gsize)
+#     else:
+#         tree_init = decisionTree(bootstrap, numerical=bag_init.numerical,
+#                                  Gsize=bag_init.Gsize)
+#     bag_init.treesInit.append(tree_init)
+#     run_ID3(tree_init)
     
+#     bag_init._calc_vote(tree_init, t, numerical=bag_init.numerical)    
+   
 def run_bagging(self):
-    trees, votes = self._bagging_loop()
-    # return trees, votes
-
-def apply_bagging(self, data):
-    H_final_raw = self._apply_bagging_loop(data)
+    # pool = Pool()
+    # pool.map(self._bagging_loop, range(self.T))
+    # for t in range(self.T):
+    self._bagging_loop()
+    # for t in range(self.T):
+    #     bagging_loop2(self, t)
+    # pool = Pool()
+    # pool.map(self._bagging_loop, range(self.T))
+    print('100% done.\n')
     
-    H_final = (H_final_raw > 0)*2-1
+# def run_bagging_parallel(bag_init):
+#     args = [(t, bag_init) for t in range(bag_init.T)]
+#     with multiprocessing.Pool(processes=4) as pool:
+#         pool.starmap(bagging_loop2, args)
+    
+def apply_bagging(self, data):
+    h_t = np.array(self._apply_bagging_loop(data))
+    h_t = (np.vectorize(self.key.get)(h_t)).T
+    alpha = np.array(self.alpha)
+    alpha_h = alpha*h_t
+    err = np.zeros((self.T,))
     true_lab = data.iloc[:,-1]
     true_lab = np.array([self.key[true_lab[i]] for i in range(len(data))])
-    err = 1 - sum(H_final == true_lab)/len(data)
-    return err        
+    for t in range(self.T):
+        H = np.sum(alpha_h[:,:t+1], axis=1) > 0
+        H = H*2 - 1
+        err[t] = sum(H != true_lab)/len(true_lab)
+    return err     
