@@ -6,16 +6,14 @@ Created on Tue Mar  2 20:57:48 2021
 """
 import numpy as np
 from ID3 import decisionTree, run_ID3, applyTree, apply_ID3
-import multiprocessing
-from itertools import product
-
 
 class Bagging:
     """
     
     """
     def __init__(self, m, T, data, numerical=False, key=None, 
-                 randForest=False, Gsize=6):
+                 randForest=False, Gsize=6, verbose=True, 
+                 global_override=False, globaldf = None):
         self.mp = m
         self.T = T
         self.data = data
@@ -31,6 +29,10 @@ class Bagging:
             self.small_sub = False
         self.randForest = randForest
         self.Gsize = Gsize
+        self.verbose = verbose
+        if global_override:
+            self.small_sub = True
+            self.globaldf = globaldf
         
     def draw_with_replacement(self):
         idx = np.random.choice(np.arange(len(self.data)), self.mp)
@@ -38,10 +40,11 @@ class Bagging:
     
     def _bag_progress(self, t):
         percent = np.round(100*t/self.T)
-        if len(self.treesInit) != self.T:        
-            print(f'{percent}% done. {t} trees created...')
-        else:
-            print(f'{percent}% done. {t} trees applied...')
+        if self.verbose:
+            if len(self.treesInit) != self.T:        
+                print(f'{percent}% done. {t} trees created...')
+            else:
+                print(f'{percent}% done. {t} trees applied...')
     
     def _calc_vote(self, tree_init, t, numerical=False):
         err_init = applyTree(self.data, tree_init, 
@@ -66,8 +69,9 @@ class Bagging:
                                          Gsize=self.Gsize)
             self.treesInit.append(tree_init)
             run_ID3(tree_init)
-            
             self._calc_vote(tree_init, t, numerical=self.numerical)
+        if self.verbose:
+            print('100% done.\n')
 
     def _map2posneg(self, h, key):
         h_mapped = [key[i] for i in h]
@@ -82,43 +86,13 @@ class Bagging:
                                   numerical=self.numerical)
             apply_ID3(applyInit)
             predicts.append(applyInit.predict)
-        print('100% done.\n')    
-        return predicts
-   
-# def bagging_loop2(t, bag_init):
-#     # for t in range(self.T):
-#     if (t)%np.round(bag_init.T/10) == 0:
-#         bag_init._bag_progress(t)
-#     bootstrap = bag_init.draw_with_replacement()
-#     if bag_init.small_sub:
-#         tree_init = decisionTree(bootstrap, numerical=bag_init.numerical,
-#                                  small_sub=bag_init.small_sub,
-#                                  globaldf=bag_init.globaldf,
-#                                  randForest=bag_init.randForest,
-#                                  Gsize=bag_init.Gsize)
-#     else:
-#         tree_init = decisionTree(bootstrap, numerical=bag_init.numerical,
-#                                  Gsize=bag_init.Gsize)
-#     bag_init.treesInit.append(tree_init)
-#     run_ID3(tree_init)
-    
-#     bag_init._calc_vote(tree_init, t, numerical=bag_init.numerical)    
+        if self.verbose:
+            print('100% done.\n')     
+        return predicts  
    
 def run_bagging(self):
-    # pool = Pool()
-    # pool.map(self._bagging_loop, range(self.T))
-    # for t in range(self.T):
     self._bagging_loop()
-    # for t in range(self.T):
-    #     bagging_loop2(self, t)
-    # pool = Pool()
-    # pool.map(self._bagging_loop, range(self.T))
-    print('100% done.\n')
     
-# def run_bagging_parallel(bag_init):
-#     args = [(t, bag_init) for t in range(bag_init.T)]
-#     with multiprocessing.Pool(processes=4) as pool:
-#         pool.starmap(bagging_loop2, args)
     
 def apply_bagging(self, data):
     h_t = np.array(self._apply_bagging_loop(data))
