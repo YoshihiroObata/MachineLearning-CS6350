@@ -13,6 +13,15 @@ import matplotlib.pyplot as plt
 import time
 
 # %%
+def var(data, m):
+    s_sq = (1/(len(data.T) - 1))*np.sum((data.T - m)**2)
+    return np.sqrt(s_sq)
+
+# %% Change T here:
+T = 50 # for AdaBoost
+T_bag = 50 # for Bagging and Random Forest
+
+# %%
 cols = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing',
         'loan', 'contact', 'day', 'month', 'duration', 'campaign', 'pdays',
         'previous', 'poutcome', 'y']
@@ -21,7 +30,6 @@ test = pd.read_csv('bank/test.csv', names=cols)
 
 # %% boosting
 tic = time.perf_counter()
-T = 500
 key = {'no':-1, 'yes':1}
 adaInit = AdaBoost(train, T, key=key)
 run_adaBoost(adaInit)
@@ -49,7 +57,11 @@ plt.xlabel('Iterations', fontsize=18)
 plt.ylabel('Error', fontsize=18)
 plt.legend(fontsize=18)
 plt.grid(True)
-
+if T == 500:
+    plt.savefig('P2AdaBoost500.png', dpi=150, bbox_inches='tight')
+else:
+    plt.savefig('P2AdaBoost.png', dpi=150, bbox_inches='tight')
+    
 fig,ax = plt.subplots(figsize=(10,5))
 plt.plot(np.arange(T), stump_err_train, 'k', label='Training', linewidth=2)
 plt.plot(np.arange(T), stump_err_test, 'r--', label='Test', linewidth=2)
@@ -59,17 +71,16 @@ for spine in ax.spines:
 plt.xlim([0,adaInit.T])
 plt.xlabel('Iterations', fontsize=18)
 plt.ylabel('Stump Error', fontsize=18)
-plt.legend(fontsize=18)
+plt.legend(fontsize=18, loc='upper right')
 plt.grid(True)
 if T == 500:
-    plt.savefig('P2AdaBoost500.png', dpi=150, bbox_inches='tight')
+    plt.savefig('P2AdaBoostStump500.png', dpi=150, bbox_inches='tight')
 else:
-    plt.savefig('P2AdaBoost.png', dpi=150, bbox_inches='tight')
+    plt.savefig('P2AdaBoostStump.png', dpi=150, bbox_inches='tight')
 
-# %% bagging
+ # %% bagging
 tic = time.perf_counter()
 m = 1000
-T_bag = 500
 bagInit = Bagging(m, T_bag, train, numerical=True, key=key)
 run_bagging(bagInit)
 # run_bagging_parallel(bagInit)
@@ -99,16 +110,6 @@ if T_bag == 500:
     plt.savefig('P2Bagging500.png', dpi=150, bbox_inches='tight')
 else:
     plt.savefig('P2Bagging.png', dpi=150, bbox_inches='tight')
-
-# %% 
-# N = 10
-# single_trees = []
-# all_errs_bag = []
-# for n in range(N):
-#     bagInit = Bagging(m, T_bag, train, numerical=True, key=key)
-#     run_bagging(bagInit)
-#     single_trees.append(bagInit.treesInit[0].tree)
-#     all_errs_bag.append(apply_bagging(bagInit, test))
 
 # %% random forest
 err_forest_train = []
@@ -149,3 +150,75 @@ if T_bag == 500:
     plt.savefig('P2RandForest500.png', dpi=150, bbox_inches='tight')
 else:
     plt.savefig('P2RandForest.png', dpi=150, bbox_inches='tight')
+    
+# %% 
+bag_h = pd.read_csv('h_bags0.csv')
+tree_h = pd.read_csv('h_trees0.csv')
+fx = test.iloc[:,-1]
+fx = np.vectorize(key.get)(fx)
+
+EXP_bag = np.mean(bag_h, axis=1)
+EXP_tree = np.mean(tree_h, axis=1)
+
+bias_bag = np.mean((fx - EXP_bag)**2)
+var_bag = np.mean(var(bag_h, EXP_bag))
+bias_tree = np.mean((fx - EXP_tree)**2)
+var_tree = np.mean(var(tree_h, EXP_tree))
+
+# %%
+forest_h = pd.read_csv('h_rand_forest1.csv')
+tree2_h = pd.read_csv('h_rand_trees1.csv')
+
+EXP_forest = np.mean(forest_h, axis=1)
+EXP_tree2 = np.mean(tree2_h, axis=1)
+
+bias_forest = np.mean((fx - EXP_forest)**2)
+var_forest = np.mean(var(bag_h, EXP_forest))
+bias_tree2 = np.mean((fx - EXP_tree2)**2)
+var_tree2 = np.mean(var(tree2_h, EXP_tree2))
+
+# %% print summary of file
+result_str = f"""------------------------------------------------------------------------------
+Results of boosting, bagging, and random forest decision trees:
+NOTE: T values for each technique are less than 500 only for TA testing.
+      Values of T=500 are used in the report but not here to save grader time.
+------------------------------------------------------------------------------
+Boosting: Plots should be generated and saved in the working directory
+    Parameters: T={T}, weak learner: decision stump
+    Final training error:\t{err_AdaTrain[-1]}
+    Final test error:\t\t{err_AdaTest[-1]}
+------------------------------------------------------------------------------
+Bagging: Plot should be generated and saved in the working directory
+    Parameters: m={m}, T={T_bag}
+    Final training error:\t{err_bag_train[-1]}
+    Final test error:\t\t{err_bag_test[-1]}
+
+    Bagging Experiment: Values obtained from experiment script
+    Parameters: m=1000, m'=1000, T=500, iterations: 100
+    Bagged trees bias:\t\t{np.round(bias_bag, 3)} 
+    Single tree bias:\t\t{np.round(bias_tree, 3)} 
+    Bagged trees variance:\t{np.round(var_bag, 3)}
+    Single tree variance:\t{np.round(var_tree, 3)}
+------------------------------------------------------------------------------
+Random Forest: Plot should be generated and saved in the working directory
+    Parameters: m={m}, T={T_bag}
+    Final training errors:\t|G|=2: {err_forest_train[0][-1]},\t|G|=4: {err_forest_train[1][-1]},\t|G|=6: {err_forest_train[2][-1]}
+    Final test errors:\t\t|G|=2: {err_forest_test[0][-1]},\t|G|=4: {err_forest_test[1][-1]},\t|G|=6: {err_forest_test[2][-1]}
+    
+    Random Forest Experiment: Values obtained from experiment script
+    Parameters: m=1000, m'=1000, |G|=2, T=500, iterations: 100
+    Random forest bias:\t\t{np.round(bias_forest, 3)} 
+    Single tree bias:\t\t{np.round(bias_tree2, 3)} 
+    Random forest variance:\t{np.round(var_forest, 3)}
+    Single tree variance:\t{np.round(var_tree2, 3)}
+------------------------------------------------------------------------------
+    """
+print(result_str)
+if T==500 and T_bag==500:    
+    txt = open('BoostBagRandForestResults500.txt', 'wt')
+    n = txt.write(result_str)
+    txt.close()
+else:
+    txt = open('BoostBagRandForestResults.txt', 'wt')
+    n = txt.write(result_str)
+    txt.close()
