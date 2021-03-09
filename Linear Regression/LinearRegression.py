@@ -19,6 +19,7 @@ class LMS:
         self.w_init = np.zeros((len(self.X.T),))
         self.converged = False
         self.J = np.zeros((T,))
+        self.verbose = verbose
         
     def _check_converge(self, w, w_next, t):
         norm = np.linalg.norm(w - w_next)
@@ -41,16 +42,21 @@ class LMS:
         print(f'norm weight difference vector: {norm}...\n')
         return w
     
-    def sgd_loop(self, w):
+    def sgd_loop(self, w, verbose=False):
         for t in range(self.T):
             self.J[t] = 0.5*sum((self.y - w.dot(self.X.T))**2)
             i = np.random.choice(np.arange(len(self.y)))
-            w_next = w + self.lr*(self.y[i] - sum(w*self.X[i,:]))*self.X[i,:]
+            # i = t
+            grad_J = -(self.y[i] - sum(w*self.X[i,:]))*self.X[i,:]
+            # w_next = w + self.lr*(self.y[i] - sum(w*self.X[i,:]))*self.X[i,:]
+            w_next = w - self.lr*grad_J
             norm = self._check_converge(w, w_next, t)
             if self.converged:
                 print(f'Done with lr={self.lr}, t={t}. Converged: {self.converged}...\n')
                 return w
             w = w_next
+            if verbose:
+                print('weights: ', w, 'gradients: ', grad_J)
         print(f'Done with lr={self.lr}, t={t}. Converged: {self.converged}...')
         print(f'norm weight difference vector: {norm}...\n')
         return w
@@ -62,7 +68,7 @@ def run_LMS_GD(self):
 
 def run_LMS_SGD(self):
     w_init = self.w_init
-    w_final = self.sgd_loop(w_init)
+    w_final = self.sgd_loop(w_init, verbose=self.verbose)
     return w_final
         
         
