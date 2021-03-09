@@ -20,9 +20,9 @@ def var(data, m):
 # %% Change T here:
 T = 50 # for AdaBoost
 T_bag = 50 # for Bagging and Random Forest
-
+key = {'no':-1, 'yes':1}
 if T == 50:
-    print('Running a smaller number of trees just for example of functionality. Results are created using T=500')
+    print('Running a smaller number of trees just for example of functionality. Results are created using T=50')
 
 # %%
 cols = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing',
@@ -33,7 +33,7 @@ test = pd.read_csv('bank/test.csv', names=cols)
 
 # %% boosting
 tic = time.perf_counter()
-key = {'no':-1, 'yes':1}
+
 adaInit = AdaBoost(train, T, key=key)
 run_adaBoost(adaInit)
 
@@ -83,7 +83,7 @@ else:
 
  # %% bagging
 if T_bag == 50:
-    print('Running a smaller number of trees just for example of functionality. Results are created using T=500')
+    print('Running a smaller number of trees just for example of functionality. Results are created using T=50')
 
 tic = time.perf_counter()
 m = 1000
@@ -119,7 +119,7 @@ else:
 
 # %% random forest
 if T_bag == 50:
-    print('Running a smaller number of trees just for example of functionality. Results are created using T=500')
+    print('Running a smaller number of trees just for example of functionality. Results are created using T=50')
 
 err_forest_train = []
 err_forest_test = []
