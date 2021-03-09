@@ -66,6 +66,7 @@ class Bagging:
                                          Gsize=self.Gsize)
             else:
                 tree_init = decisionTree(bootstrap, numerical=self.numerical,
+                                         randForest=self.randForest,
                                          Gsize=self.Gsize)
             self.treesInit.append(tree_init)
             run_ID3(tree_init)

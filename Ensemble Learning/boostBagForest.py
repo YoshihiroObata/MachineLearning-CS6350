@@ -15,11 +15,14 @@ import time
 # %%
 def var(data, m):
     s_sq = (1/(len(data.T) - 1))*np.sum((data.T - m)**2)
-    return np.sqrt(s_sq)
+    return s_sq
 
 # %% Change T here:
 T = 50 # for AdaBoost
 T_bag = 50 # for Bagging and Random Forest
+
+if T == 50:
+    print('Running a smaller number of trees just for example of functionality. Results are created using T=500')
 
 # %%
 cols = ['age', 'job', 'marital', 'education', 'default', 'balance', 'housing',
@@ -79,6 +82,9 @@ else:
     plt.savefig('P2AdaBoostStump.png', dpi=150, bbox_inches='tight')
 
  # %% bagging
+if T_bag == 50:
+    print('Running a smaller number of trees just for example of functionality. Results are created using T=500')
+
 tic = time.perf_counter()
 m = 1000
 bagInit = Bagging(m, T_bag, train, numerical=True, key=key)
@@ -112,6 +118,9 @@ else:
     plt.savefig('P2Bagging.png', dpi=150, bbox_inches='tight')
 
 # %% random forest
+if T_bag == 50:
+    print('Running a smaller number of trees just for example of functionality. Results are created using T=500')
+
 err_forest_train = []
 err_forest_test = []
 for Gsize in [2, 4, 6]:
@@ -166,14 +175,14 @@ bias_tree = np.mean((fx - EXP_tree)**2)
 var_tree = np.mean(var(tree_h, EXP_tree))
 
 # %%
-forest_h = pd.read_csv('h_rand_forest1.csv')
-tree2_h = pd.read_csv('h_rand_trees1.csv')
+forest_h = pd.read_csv('h_rand_forest2.csv')
+tree2_h = pd.read_csv('h_rand_trees2.csv')
 
 EXP_forest = np.mean(forest_h, axis=1)
 EXP_tree2 = np.mean(tree2_h, axis=1)
 
 bias_forest = np.mean((fx - EXP_forest)**2)
-var_forest = np.mean(var(bag_h, EXP_forest))
+var_forest = np.mean(var(forest_h, EXP_forest))
 bias_tree2 = np.mean((fx - EXP_tree2)**2)
 var_tree2 = np.mean(var(tree2_h, EXP_tree2))
 
@@ -212,7 +221,7 @@ Random Forest: Plot should be generated and saved in the working directory
     Random forest variance:\t{np.round(var_forest, 3)}
     Single tree variance:\t{np.round(var_tree2, 3)}
 ------------------------------------------------------------------------------
-    """
+"""
 print(result_str)
 if T==500 and T_bag==500:    
     txt = open('BoostBagRandForestResults500.txt', 'wt')
