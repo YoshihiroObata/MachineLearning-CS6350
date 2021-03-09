@@ -77,7 +77,7 @@ test = pd.read_csv('bank/test.csv', names=cols)
 m = 1000
 T_bag = 50
 key = {'no':-1, 'yes':1}
-itera = 10
+itera = 5
 Gsize = 2
 
 # %%

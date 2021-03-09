@@ -79,7 +79,7 @@ T_bag = 50
 key = {'no':-1, 'yes':1}
 
 # %%
-itera = 10
+itera = 5
 if itera < 500:
     print('Less iterations are used to show functionality but save time')
 
