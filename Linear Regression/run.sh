@@ -1,2 +1,2 @@
 #!/bin/bash
-python GDandSGD.py
+python3 GDandSGD.py
