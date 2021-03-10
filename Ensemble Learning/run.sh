@@ -1,4 +1,4 @@
 #!/bin/bash
-python boostBagForest.py
-python baggingExperiment.py
-python randomForestExperiment.py
+python3 boostBagForest.py
+python3 baggingExperiment.py
+python3 randomForestExperiment.py
