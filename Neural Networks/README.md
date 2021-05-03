@@ -1,0 +1,2 @@
+# This contains functions needed to predict using a 3-layer fully connected neural network
+Hyperparameter tuning may take some time. This should have everything in it for a basic implementation of varying widths, but more will be added later to make it adaptable to different depths.
