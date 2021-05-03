@@ -1,0 +1,2 @@
+# This contains functions needed to perform MAP and MLE logistic regression with stochastic gradient descent.
+The file log_regr_problems will run many examples to tune hyperparameters and then plot the final results. The output may be commented, if you want to see it you can uncomment.
