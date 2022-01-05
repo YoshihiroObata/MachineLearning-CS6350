@@ -8,12 +8,7 @@ At the core, a decision tree is a hierarchical structure that represents a way t
 Decision trees aim to create a network of choices that can represent a dataset well using examples. Each "node" on the tree is a data subset. The data subset at a node is represented by a "feature" of the data. At each node, branches are created for each value that node can take. Leaves of the tree are class labels and indicate when to stop subsetting the data.
 
 ### How is the best feature selected for a node?
-To determine the best feature for a node to split on, a technique called information gain can be used on the attributes of a feature. In concept, information gain performs exactly what it sounds like, it calculates a representation of how much information will be gained if a certain attribute is split upon. Of the common ways to implement information gain, I implemented entropy, Gini index, and majority error. Here's a brief decription of how they work.
-
-#### Entropy
-Entropy and Gini index are among the most common methods for information gain. The formula for entropy is as follows.
-
-<img src="https://render.githubusercontent.com/render/math?math=Gain(S,A)=Entropy(S)-\sum_{v\in Values(A)}\frac{\abs{S_v}}{\abs{S}}Entropy(S_v)"> 
+To determine the best feature for a node to split on, a technique called information gain can be used on the attributes of a feature. In concept, information gain performs exactly what it sounds like, it calculates a representation of how much information will be gained if a certain attribute is split upon. Of the common ways to implement information gain, I implemented entropy, Gini index, and majority error. Here's a brief decription of how they work. Information gain is a quite nifty, I probably won't be able to explain it as nicely as other resources online, so here are a few 
 
 ## Why use decision trees?
 
