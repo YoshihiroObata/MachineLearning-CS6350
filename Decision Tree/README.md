@@ -12,7 +12,8 @@ To determine the best feature for a node to split on, a technique called informa
 
 #### Entropy
 Entropy and Gini index are among the most common methods for information gain. The formula for entropy is as follows.
-\[ Gain(S,A) = Entropy(S) - \sum_{v\in Values(A)} \frac{\abs{S_v}}{\abs{S}}Entropy(S_v} \]
+
+<img src="https://render.githubusercontent.com/render/math?math=Gain(S,A) = Entropy(S) - \sum_{v\in Values(A)} \frac{\abs{S_v}}{\abs{S}}Entropy(S_v}"> 
 
 ## Why use decision trees?
 
